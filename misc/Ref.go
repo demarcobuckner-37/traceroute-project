@@ -1,5 +1,8 @@
 package main
 
+// Reference used while learning/building this traceroute implementation:
+// https://kmcd.dev/posts/traceroute/
+
 import (
 	"fmt"
 	"log"
