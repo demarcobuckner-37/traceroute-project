@@ -1,5 +1,5 @@
 
-## Day 1 April 29, 2026 
+## April 29, 2026 
 
 ### What I did 
 
@@ -22,7 +22,7 @@
 - Created personal access token 
 - Used token instead of password
 
-## Day 2 — May 6, 2026
+##  May 6, 2026
 
 ### What I did
 
@@ -56,7 +56,7 @@
   ```go
   address := host + ":80"
 
-## Day 3 — May 7, 2026
+##  May 7, 2026
 
 ### What I did
 
@@ -111,7 +111,7 @@
   ```bash
   go mod init traceroute-project
 
-## Day 4 — May 13, 2026
+## May 13, 2026
 
 ### What I did
 
@@ -183,7 +183,7 @@
   - TTL fields
   - ICMP response types
 
-## Day 5 — May 14, 2026
+## May 14, 2026
 
 ### What I did
 
@@ -245,7 +245,7 @@
   ```
 - Placed timeout handling inside the probe loop so each connection attempt has its own timeout
 
-## Day 6 — May 17, 2026
+## May 17, 2026
 
 ### What I did
 
@@ -268,7 +268,7 @@
 - Begin implementing traceroute functionality
 - Continue improving project organization and logging
 
-## Day 7 — May 18, 2026
+## May 18, 2026
 
 ### What I did
 
@@ -314,7 +314,7 @@
   ```go
   rm.Body.(*icmp.Echo)
 
-## Day 8 — May 19, 2026
+## May 19, 2026
 
 ### What I did
 
