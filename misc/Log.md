@@ -244,3 +244,167 @@
   net.DialTimeout()
   ```
 - Placed timeout handling inside the probe loop so each connection attempt has its own timeout
+
+## Day 6 — May 17, 2026
+
+### What I did
+
+- Organized the Go traceroute project structure
+- Created folders for:
+  - traceroute logic
+  - latency testing
+  - DNS functionality
+  - utilities
+  - logs/documentation
+- Planned how networking features will be separated into packages and files
+
+### What I learned
+
+- Go projects are easier to manage when functionality is separated into packages
+- Project structure becomes more important as networking tools grow in complexity
+
+### Next Steps
+
+- Begin implementing traceroute functionality
+- Continue improving project organization and logging
+
+## Day 7 — May 18, 2026
+
+### What I did
+
+- Began implementing a raw ICMP ping tool in Go
+- Created ICMP Echo Request packets using:
+  - `icmp.Message`
+  - `icmp.Echo`
+- Used:
+  - `icmp.ListenPacket()`
+  - `WriteTo()`
+  - `ReadFrom()`
+- Sent ICMP Echo Requests to destination hosts
+- Received ICMP Echo Replies
+- Added RTT (Round Trip Time) measurements using:
+  - `time.Now()`
+  - `time.Since()`
+- Implemented timeout handling using:
+  - `SetReadDeadline()`
+- Added multiple probes using a loop
+- Added sequence number tracking for probes
+- Parsed ICMP packets using:
+  - `icmp.ParseMessage()`
+- Learned how ICMP replies are validated using:
+  - process IDs
+  - sequence numbers
+- Began modularizing the project into:
+  - `main.go`
+  - `latencyTool.go`
+  - `pingTool.go`
+
+### What I learned
+
+- Difference between TCP latency testing and raw ICMP networking
+- How ICMP Echo Requests and Echo Replies work internally
+- How raw ICMP sockets operate at the packet level
+- Why raw sockets usually require administrator privileges
+- How RTT is measured using send and receive timestamps
+- How ICMP packet parsing works
+- Why sequence numbers help identify individual probes
+- Why process IDs help validate packet ownership
+- Difference between generic ICMP message bodies and Echo Reply structures
+- How Go type assertions work:
+  ```go
+  rm.Body.(*icmp.Echo)
+
+## Day 8 — May 19, 2026
+
+### What I did
+
+- Continued improving the ICMP ping tool
+- Added:
+  - average RTT calculation
+  - minimum RTT tracking
+  - maximum RTT tracking
+  - packet loss calculation
+- Added validation for:
+  - ICMP Echo Reply IDs
+  - sequence numbers
+- Improved timeout handling logic
+- Added probe delays using:
+  ```go
+  time.Sleep()
+  ```
+- Cleaned up packet parsing and output formatting
+- Refactored the project architecture into reusable modules
+- Shared host input between:
+  - latency tool
+  - ping tool
+- Successfully tested the tool against:
+  - `google.com`
+- Used:
+  ```bash
+  sudo go run .
+  ```
+  to run the complete networking toolkit
+
+### What I learned
+
+- How ping statistics are calculated
+- Difference between:
+  - average RTT
+  - minimum RTT
+  - maximum RTT
+  - packet loss
+- Why reply validation is important in raw socket networking
+- How process IDs and sequence numbers help verify ICMP replies
+- How ICMP packets are parsed into structured message types
+- How Go type assertions work using:
+  ```go
+  rm.Body.(*icmp.Echo)
+  ```
+- Why raw ICMP networking typically requires administrator privileges
+- How Go packages/functions interact across multiple files
+
+### Problems
+
+- Function definitions and function calls did not initially match
+- `go run main.go` only compiled a single file instead of the full package
+- Empty Go files caused package compilation errors
+- RTT statistics initially failed due to variable scope issues
+- Timeout logic was initially checked in the wrong location
+
+### Fixes
+
+- Matched function definitions with function calls
+- Switched from:
+  ```bash
+  go run main.go
+  ```
+  to:
+  ```bash
+  go run .
+  ```
+- Added:
+  ```go
+  package main
+  ```
+  to all project files
+- Moved statistics variables outside probe loops
+- Corrected timeout handling placement around:
+  ```go
+  ReadFrom()
+  ```
+
+### Current Status
+
+- TCP latency tool is functional
+- ICMP ping tool is functional
+- RTT statistics are working
+- Packet loss tracking is working
+- Sequence validation is implemented
+- Project structure has been modularized
+
+### Next Steps
+
+- Begin implementing TTL manipulation
+- Handle ICMP Time Exceeded messages
+- Start hop-by-hop traceroute discovery
+```
