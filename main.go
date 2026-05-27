@@ -22,5 +22,6 @@ func main() {
 
 	RunLatencyTool(host)
 	RunPingTool(host)
+	RunTraceroute(host)
 
 }
