@@ -20,8 +20,9 @@ func main() {
 	// Remove extra spaces/newline characters
 	host = strings.TrimSpace(host)
 
-	RunLatencyTool(host)
-	RunPingTool(host)
-	RunTraceroute(host)
+	// RunLatencyTool(host)
+	//RunPingTool(host)
+	hops := RunTraceroute(host)
+	RunAvgRTT(hops)
 
 }

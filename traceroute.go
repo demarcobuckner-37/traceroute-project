@@ -271,11 +271,13 @@ func RunTraceroute(host string) []Hop {
 	packetLoss := float64(probesSent-successfulProbes) / float64(probesSent) * 100
 	fmt.Printf("Packet Loss: %.2f%%\n", packetLoss)
 
+	println("\nTraceroute complete.")
+
 	// ROUTE OUTPUT
 	// Print all discovered hops and their RTT measurements
 	fmt.Printf("\nTraceroute Results:\n")
 	for _, hop := range hops {
-		fmt.Printf("TTL: %d | Host: %s | IP: %s | RTT: %v\n", hop.TTL, hop.Host, hop.IPAddress, hop.RTTs)
+		fmt.Printf("TTL: %d | Host: %s | IP: %s\n", hop.TTL, hop.Host, hop.IPAddress)
 	}
 
 	return hops
