@@ -1,0 +1,16 @@
+func PrintHopAnalysis(hops []Hop) {
+	for _, h := range hops {
+
+		host := h.Host
+		ip := h.IPAddress
+
+		if host == "" {
+			host = "*"
+		}
+
+		if ip == "" {
+			ip = "*"
+		}
+
+	}
+}

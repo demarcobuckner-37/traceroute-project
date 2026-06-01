@@ -23,6 +23,6 @@ func main() {
 	// RunLatencyTool(host)
 	//RunPingTool(host)
 	hops := RunTraceroute(host)
-	RunAvgRTT(hops)
+	hops = RunAnalyzeHops(hops)
 
 }

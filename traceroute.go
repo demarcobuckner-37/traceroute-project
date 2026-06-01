@@ -20,6 +20,26 @@ type Hop struct {
 	Host string
 	// IP address of responding router
 	IPAddress string
+
+	AvgRTT time.Duration
+
+	MinRTT time.Duration
+
+	MaxRTT time.Duration
+
+	SentProbes int
+
+	SuccessfulProbes int
+
+	PacketLoss float64
+
+	Jitter time.Duration
+
+	RTTIncrease time.Duration
+
+	BottleneckScore int
+
+	Severity string
 }
 
 func RunTraceroute(host string) []Hop {
@@ -103,6 +123,23 @@ func RunTraceroute(host string) []Hop {
 				return nil
 			}
 
+			found := false
+
+			for k := range hops {
+				if hops[k].TTL == ttl {
+					hops[k].SentProbes++
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				hops = append(hops, Hop{
+					TTL:        ttl,
+					SentProbes: 1,
+				})
+			}
+
 			probesSent++
 
 			// RECEIVE REPLY
@@ -175,6 +212,12 @@ func RunTraceroute(host string) []Hop {
 				for k := range hops {
 					if hops[k].TTL == ttl {
 						hops[k].RTTs = append(hops[k].RTTs, elapsed)
+
+						hops[k].Host = peer.String()
+						hops[k].IPAddress = peer.String()
+
+						hops[k].SuccessfulProbes++
+
 						found = true
 						break
 					}
@@ -184,10 +227,11 @@ func RunTraceroute(host string) []Hop {
 				// Create a new hop record if this TTL has not been seen before.
 				if !found {
 					hops = append(hops, Hop{
-						TTL:       ttl,
-						RTTs:      []time.Duration{elapsed},
-						Host:      peer.String(),
-						IPAddress: peer.String(),
+						TTL:              ttl,
+						RTTs:             []time.Duration{elapsed},
+						Host:             peer.String(),
+						IPAddress:        peer.String(),
+						SuccessfulProbes: 1,
 					})
 				}
 
@@ -224,6 +268,12 @@ func RunTraceroute(host string) []Hop {
 					// Add RTT measurement to existing hop
 					if hops[k].TTL == ttl {
 						hops[k].RTTs = append(hops[k].RTTs, elapsed)
+
+						hops[k].Host = peer.String()
+						hops[k].IPAddress = peer.String()
+
+						hops[k].SuccessfulProbes++
+
 						found = true
 						break
 					}
@@ -233,10 +283,11 @@ func RunTraceroute(host string) []Hop {
 				// Create a new hop entry if this TTL has not been seen before
 				if !found {
 					hops = append(hops, Hop{
-						TTL:       ttl,
-						RTTs:      []time.Duration{elapsed},
-						Host:      peer.String(),
-						IPAddress: peer.String(),
+						TTL:              ttl,
+						RTTs:             []time.Duration{elapsed},
+						Host:             peer.String(),
+						IPAddress:        peer.String(),
+						SuccessfulProbes: 1,
 					})
 				}
 
@@ -246,7 +297,6 @@ func RunTraceroute(host string) []Hop {
 				fmt.Println("Destination reached!")
 				fmt.Printf("Echo Reply ID: %d, Seq: %d, Data: %s\n", echoReply.ID, echoReply.Seq, string(echoReply.Data))
 				fmt.Printf("TTL: %d\n", ttl)
-				break
 
 			default:
 				fmt.Printf("Received ICMP message of type %v\n", rm.Type)
