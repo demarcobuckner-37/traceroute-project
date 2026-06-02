@@ -40,6 +40,16 @@ type Hop struct {
 	BottleneckScore int
 
 	Severity string
+
+	RTTIncreaseFlag bool
+
+	HighPacketLossFlag bool
+
+	HighJitterFlag bool
+
+	HighAvgRTTFlag bool
+
+	HighMaxRTTFlag bool
 }
 
 func RunTraceroute(host string) []Hop {
@@ -67,13 +77,7 @@ func RunTraceroute(host string) []Hop {
 	// Slice used to store discovered hops and RTT measurements.
 	var hops []Hop
 
-	var probesSent int
-	var totalRTT time.Duration
-
-	var successfulProbes int
-	var minTime time.Duration
-	var maxTime time.Duration
-
+	//Used to stop TTL discovery once destination responds
 	destinationReached := false
 
 	// Increase TTL one hop at a time to reveal the route
@@ -123,6 +127,8 @@ func RunTraceroute(host string) []Hop {
 				return nil
 			}
 
+			//PROBE TRACKING
+			//Record that a probe was sent for this TTL
 			found := false
 
 			for k := range hops {
@@ -140,8 +146,6 @@ func RunTraceroute(host string) []Hop {
 				})
 			}
 
-			probesSent++
-
 			// RECEIVE REPLY
 			// Create buffer for incoming packet data
 			buf := make([]byte, 1024)
@@ -153,29 +157,17 @@ func RunTraceroute(host string) []Hop {
 				return nil
 			}
 			numRead, peer, err := c.ReadFrom(buf)
+			//TIMEOUT HANDLING
+			//Np reply received within timeout period, treat as lost packet
 			if err != nil {
 				fmt.Printf("\nHop %d Probe %d\n", ttl, i+1)
 				fmt.Println("Request timed out.")
 				continue
 			}
-			successfulProbes++
 
 			// RTT TIMING
 			// Measure round-trip time
 			elapsed := time.Since(start)
-			totalRTT += elapsed
-
-			if successfulProbes == 1 {
-				minTime = elapsed
-				maxTime = elapsed
-			} else {
-				if elapsed < minTime {
-					minTime = elapsed
-				}
-				if elapsed > maxTime {
-					maxTime = elapsed
-				}
-			}
 
 			fmt.Printf("\nHop %d Probe %d\n", ttl, i+1)
 
@@ -184,7 +176,6 @@ func RunTraceroute(host string) []Hop {
 			// Print raw packet bytes in hexadecimal
 			//fmt.Printf("% X\n", buf[:numRead])
 
-			// Print responding host
 			fmt.Printf("Received reply from %v\n", peer)
 
 			// PACKET PARSING
@@ -310,25 +301,7 @@ func RunTraceroute(host string) []Hop {
 		}
 	}
 
-	// TRACEROUTE STATISTICS
-	// Calculate overall RTT and packet loss metrics
-	if successfulProbes > 0 {
-		avgRTT := totalRTT / time.Duration(successfulProbes)
-		fmt.Printf("\nAverage RTT over %d succesfull probes: %s\n", successfulProbes, avgRTT)
-		fmt.Printf("Minimum RTT: %s\n", minTime)
-		fmt.Printf("Maximum RTT: %s\n", maxTime)
-	}
-	packetLoss := float64(probesSent-successfulProbes) / float64(probesSent) * 100
-	fmt.Printf("Packet Loss: %.2f%%\n", packetLoss)
-
 	println("\nTraceroute complete.")
-
-	// ROUTE OUTPUT
-	// Print all discovered hops and their RTT measurements
-	fmt.Printf("\nTraceroute Results:\n")
-	for _, hop := range hops {
-		fmt.Printf("TTL: %d | Host: %s | IP: %s\n", hop.TTL, hop.Host, hop.IPAddress)
-	}
 
 	return hops
 }

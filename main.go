@@ -24,5 +24,7 @@ func main() {
 	//RunPingTool(host)
 	hops := RunTraceroute(host)
 	hops = RunAnalyzeHops(hops)
+	hops = RunBottleneckDetection(hops)
+	PrintHopAnalysis(hops)
 
 }

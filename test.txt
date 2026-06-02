@@ -10,6 +10,7 @@ func main() {
 	hop := RunTraceroute(host)
 	hop = RunAnalyzeHops(hop)
 	RunBottleneckDetection(hop)
+	PrintHopAnalysis(hop)
 
 	for _, h := range hop {
 

@@ -407,4 +407,747 @@
 - Begin implementing TTL manipulation
 - Handle ICMP Time Exceeded messages
 - Start hop-by-hop traceroute discovery
+
+
+## May 21, 2026
+
+### What I did
+
+- Began development of the traceroute tool
+- Implemented TTL manipulation using:
+  ```go
+  c.IPv4PacketConn().SetTTL(ttl)
+  ```
+- Created a loop to increment TTL values from 1 to 64
+- Modified ICMP Echo Request packets to use TTL values as sequence numbers
+- Added support for receiving ICMP Time Exceeded messages
+- Successfully received responses from intermediate routers
+- Verified that routers decrement TTL values and return ICMP Time Exceeded when TTL reaches zero
+
+### What I learned
+
+- How traceroute discovers network paths using TTL expiration
+- Difference between ICMP Echo Reply and ICMP Time Exceeded messages
+- How routers process and decrement TTL values
+- Why traceroute sends multiple probes with increasing TTL values
+- How Go's IPv4 packet connection interface allows TTL manipulation
+
+### Problems
+
+- Initial traceroute implementation only behaved like a ping tool
+- TTL values were not changing between probes
+- Sequence number validation logic conflicted with traceroute behavior
+
+### Fixes
+
+- Moved:
+  ```go
+  SetTTL(ttl)
+  ```
+  inside the traceroute loop
+- Updated sequence numbers to track individual hops
+- Added ICMP Time Exceeded handling to the packet parser
+
+### Current Status
+
+- Hop-by-hop discovery is functioning
+- Intermediate routers are responding correctly
+- TTL manipulation is working
+
+### Next Steps
+
+- Improve route output formatting
+- Store hop information for later analysis
+- Add multiple probes per hop
+
+## May 23, 2026
+
+### What I did
+
+- Expanded traceroute to send three probes per hop
+- Added nested loops for:
+  - TTL values
+  - individual probes
+- Measured RTT for every probe
+- Added destination detection using ICMP Echo Reply messages
+- Implemented packet loss tracking during traceroute execution
+- Tested routes to multiple destinations
+
+### What I learned
+
+- Why traceroute tools typically send multiple probes for each hop
+- How RTT can fluctuate between probes
+- Why some routers respond inconsistently to ICMP requests
+- How packet loss can affect traceroute output
+
+### Problems
+
+- Destination detection initially stopped execution incorrectly
+- Packet loss calculations did not reflect the total number of probes sent
+- Loop control became more complicated with multiple probes
+
+### Fixes
+
+- Added a destination tracking flag
+- Corrected probe counting logic
+- Adjusted loop flow when the destination was reached
+
+### Current Status
+
+- Three probes per hop are working
+- Packet loss calculations are functioning
+- Destination detection is working properly
+
+### Next Steps
+
+- Store route information in a structured format
+- Create a custom Hop data structure
+- Prepare route data for later analysis
+
+## May 24, 2026
+
+### What I did
+
+- Created a custom Hop structure:
+  ```go
+  type Hop struct {
+      TTL       int
+      RTTs      []time.Duration
+      Host      string
+      IPAddress string
+  }
+  ```
+- Began storing traceroute results in a slice of Hop objects
+- Changed RTT storage from a single value to a slice of RTT values
+- Added logic to group multiple RTT measurements under the same hop
+- Refactored route collection to reduce duplicate entries
+
+### What I learned
+
+- How Go slices can be used to store dynamic collections of data
+- Why structured data makes analysis easier
+- The benefits of grouping probe results by hop
+- How route data can be reused outside the traceroute function
+
+### Problems
+
+- Every probe initially created a new hop entry
+- RTT values were not grouped together correctly
+- Duplicate hop records made route output difficult to read
+
+### Fixes
+
+- Added lookup logic before creating new Hop entries
+- Appended RTT values to existing hops when TTLs matched
+- Reduced duplicate records in the route output
+
+### Current Status
+
+- Hop storage is working
+- RTT aggregation is functioning correctly
+- Route information is organized and reusable
+
+### Next Steps
+
+- Convert traceroute into a reusable function
+- Return collected hop data
+- Begin implementing analysis features
+
+## May 26, 2026
+
+### What I did
+
+- Refactored traceroute into a reusable function:
+  ```go
+  func RunTraceroute(host string) []Hop
+  ```
+- Removed user input handling from the traceroute logic
+- Added:
+  ```go
+  return hops
+  ```
+  to return collected route data
+- Updated error handling to return:
+  ```go
+  return nil
+  ```
+  when failures occur
+- Verified that traceroute results can be returned and reused by other functions
+- Began transitioning the project from data collection to data analysis
+
+### What I learned
+
+- Why reusable functions improve software design
+- The importance of separating data collection from data analysis
+- How Go handles slice return values
+- How modular design makes future features easier to implement
+
+### Problems
+
+- Function return types and return statements did not initially match
+- Some error paths still used:
+  ```go
+  return
+  ```
+- User input code conflicted with the new function design
+
+### Fixes
+
+- Updated all return statements to match the function signature
+- Removed unnecessary input handling from the traceroute module
+- Verified successful route collection through returned hop data
+
+### Current Status
+
+- Traceroute is now a reusable module
+- Route data can be passed to future analysis functions
+- Hop collection and storage are functioning correctly
+
+### Next Steps
+
+- Calculate average RTT per hop
+- Identify high-latency hops
+- Detect potential bottlenecks
+- Export route information for reporting and analysis
+
+## May 27, 2026
+
+### What I did
+
+- Continued improving the traceroute analysis system
+- Refactored the traceroute tool to return:
+
+```go
+[]Hop
 ```
+
+for use in external analysis functions
+
+- Implemented a separate RTT analysis module:
+
+```go
+RunAvgRTT()
+```
+
+- Added support for calculating average RTT per hop
+- Used nested loops to iterate through:
+  - each hop
+  - each RTT measurement stored in the hop
+- Improved traceroute output formatting and route summaries
+- Successfully tested the traceroute system against:
+  - `google.com`
+- Verified that hop RTT values were being stored correctly inside:
+
+```go
+RTTs []time.Duration
+```
+
+### What I learned
+
+- Why traceroute collection and analysis should be separated into different functions
+- How reusable analysis functions improve project architecture
+- Why RTT sample counts vary between hops in real networks
+- How nested loops are used to process structured networking data
+- How Go handles arithmetic with:
+
+```go
+time.Duration
+```
+
+- Why hardcoded RTT indexing is unsafe when probes timeout
+- How averages can become distorted by latency spikes and unstable hops
+
+### Problems
+
+- Program crashed with:
+
+```text
+index out of range
+```
+
+when hops contained fewer than three RTT measurements
+
+- Some hops returned:
+  - only one RTT
+  - two RTTs
+  - or completely timed out
+- Analysis functions initially expected incorrect argument types
+- Multiple `main()` functions caused project compilation conflicts during testing
+
+### Fixes
+
+- Replaced hardcoded RTT indexing with:
+
+```go
+for _, rtt := range h.RTTs
+```
+
+- Added validation using:
+
+```go
+len(h.RTTs)
+```
+
+before RTT calculations
+
+- Refactored the analysis system to accept:
+
+```go
+[]Hop
+```
+
+as input
+
+- Removed or renamed extra test `main()` functions
+- Improved traceroute route summaries by separating:
+  - collection
+  - analysis
+  - presentation logic
+
+### Current Status
+
+- Traceroute tool successfully discovers network routes
+- Multiple probes per hop are functioning correctly
+- Hop data is stored dynamically using a custom structure
+- Average RTT per hop calculations are working
+- Traceroute and analysis systems are now modularized
+- Route summaries and RTT analysis are producing clean output
+
+### Next Steps
+
+- Implement bottleneck detection analysis
+- Add jitter and instability calculations
+- Build route comparison functionality
+- Add packet loss analysis per hop
+- Continue refactoring analysis tools into reusable modules
+
+## May 28, 2026
+
+### What I did
+
+- Continued developing the traceroute analysis system
+- Expanded the `Hop` structure to store:
+  - Average RTT
+  - Minimum RTT
+  - Maximum RTT
+  - Packet Loss
+  - Jitter
+- Created a dedicated analysis function:
+
+```go
+RunAnalyzeHops()
+```
+
+- Implemented average RTT calculations for each hop
+- Implemented minimum and maximum RTT tracking
+- Implemented per-hop packet loss calculations using:
+
+```go
+SentProbes
+SuccessfulProbes
+```
+
+- Implemented jitter calculations by averaging the difference between consecutive RTT measurements
+- Added protection against division-by-zero errors when calculating jitter
+- Modified the analysis function to return:
+
+```go
+[]Hop
+```
+
+for use by future analysis modules
+- Tested the analysis system using traceroute results from:
+
+```text
+google.com
+```
+
+### What I learned
+
+- How to enrich existing structs with calculated analysis data
+- The difference between global packet loss and per-hop packet loss
+- Why jitter is a useful metric for detecting unstable network paths
+- How Go pointers allow modifications to structs stored inside slices
+- Why analysis functions should return modified data for later processing
+- How traceroute collection and analysis can be separated into different stages
+
+### Problems
+
+- Packet loss calculations initially only existed at the overall route level
+- Existing hop records were not storing probe statistics
+- Jitter calculations initially risked division-by-zero errors
+- Analysis code was originally embedded in testing code instead of a reusable function
+
+### Fixes
+
+- Added:
+
+```go
+SentProbes
+SuccessfulProbes
+PacketLoss
+Jitter
+```
+
+to the `Hop` structure
+
+- Initialized probe counters when creating new hop records
+- Added:
+
+```go
+if len(h.RTTs) > 1
+```
+
+before calculating jitter
+
+- Moved analysis logic into:
+
+```go
+RunAnalyzeHops()
+```
+
+- Modified the function to return analyzed hop data
+
+### Current Status
+
+- Traceroute route discovery is working
+- Average RTT calculations are working
+- Minimum and maximum RTT calculations are working
+- Per-hop packet loss calculations are implemented
+- Jitter calculations are implemented
+- Analysis results are stored directly in hop records
+- Analysis functions now support future route-analysis modules
+
+### Next Steps
+
+- Implement bottleneck detection
+- Create route summary reporting
+- Add instability detection based on jitter values
+- Improve per-hop packet loss tracking
+- Begin comparing routes across multiple traceroute executions
+
+# May 31, 2026
+
+## Objectives
+- Begin developing a hop analysis module for traceroute results.
+- Calculate performance metrics for each hop.
+- Investigate methods for detecting network bottlenecks.
+
+## Work Completed
+
+### Average RTT Calculation
+
+Created a function to calculate average RTT for each hop using collected RTT samples.
+
+Implemented:
+
+```go
+total := time.Duration(0)
+
+for _, rtt := range h.RTTs {
+    total += rtt
+}
+
+h.AvgRTT = total / time.Duration(len(h.RTTs))
+```
+
+Learned how to work with `time.Duration` values and perform calculations using multiple RTT samples.
+
+---
+
+### Minimum and Maximum RTT
+
+Added logic to track the fastest and slowest RTT observed for each hop.
+
+Implemented:
+
+```go
+if rtt < h.MinRTT || h.MinRTT == 0 {
+    h.MinRTT = rtt
+}
+
+if rtt > h.MaxRTT {
+    h.MaxRTT = rtt
+}
+```
+
+Stored results in the Hop structure for later analysis.
+
+---
+
+### Packet Loss Analysis
+
+Added packet loss calculations to the hop analysis process.
+
+Implemented:
+
+```go
+h.PacketLoss =
+    float64(h.SentProbes-h.SuccessfulProbes) /
+    float64(h.SentProbes) * 100
+```
+
+Initially discovered that packet loss always appeared as 0%.
+
+Investigated probe counting logic and identified flaws in how sent probes and successful probes were tracked.
+
+---
+
+### Hop Data Structure Expansion
+
+Expanded the Hop structure to support:
+
+- Average RTT
+- Minimum RTT
+- Maximum RTT
+- Packet Loss
+
+Prepared the structure for future bottleneck analysis.
+
+---
+
+## Concepts Learned
+
+- Working with Go's `time.Duration`
+- Statistical analysis of network latency
+- Packet loss calculations
+- Per-hop network metrics
+- Struct-based data storage
+
+---
+
+## Problems Encountered
+
+### Packet Loss Reporting Incorrect Values
+
+Cause:
+
+- Sent probes were only being counted when replies were received.
+
+Investigation began to redesign how probe statistics were stored.
+
+---
+
+## Status
+
+Completed:
+
+- Average RTT
+- Minimum RTT
+- Maximum RTT
+- Initial packet loss implementation
+
+Next:
+
+- Fix packet loss tracking
+- Add jitter calculations
+- Begin bottleneck detection logic
+
+# June 1, 2026
+
+## Objectives
+- Correct packet loss tracking.
+- Add advanced hop analysis metrics.
+- Implement bottleneck detection and severity scoring.
+
+## Work Completed
+
+### Packet Loss Fix
+
+Refactored traceroute collection logic.
+
+Implemented:
+
+- Sent probes counted immediately after packet transmission.
+- Successful probes counted only after valid ICMP replies.
+- Timeouts properly contribute to packet loss statistics.
+
+This resolved the issue where packet loss was always reported as 0%.
+
+---
+
+### Jitter Calculation
+
+Implemented jitter analysis using RTT variation between probes.
+
+Approach:
+
+```go
+diff := h.RTTs[i] - h.RTTs[i-1]
+
+if diff < 0 {
+    diff = -diff
+}
+```
+
+Average jitter is calculated from the absolute RTT differences.
+
+Stored result in:
+
+```go
+h.Jitter
+```
+
+---
+
+### RTT Increase Analysis
+
+Added hop-to-hop latency comparison.
+
+Implemented:
+
+```go
+rttIncrease := h.AvgRTT - prev.AvgRTT
+```
+
+Stored in:
+
+```go
+h.RTTIncrease
+```
+
+This allows detection of sudden increases in latency between adjacent network hops.
+
+---
+
+### Bottleneck Detection Module
+
+Created:
+
+```go
+RunBottleneckDetection()
+```
+
+The module evaluates:
+
+- RTT increase
+- Packet loss
+- Jitter
+- Average RTT
+- Maximum RTT
+
+for every hop in the route.
+
+---
+
+### Weighted Bottleneck Scoring
+
+Implemented a weighted scoring system.
+
+Current weights:
+
+| Condition | Score |
+|------------|--------|
+| RTT Increase > 30ms | +2 |
+| Packet Loss > 20% | +2 |
+| Packet Loss ≥ 99.9% | +4 |
+| Average RTT > 100ms | +2 |
+| Jitter > 30ms | +1 |
+| Maximum RTT > 200ms | +1 |
+
+Stored score in:
+
+```go
+h.BottleneckScore
+```
+
+---
+
+### Severity Classification
+
+Added severity levels:
+
+```go
+Minor
+Moderate
+Severe
+```
+
+Stored in:
+
+```go
+h.Severity
+```
+
+Classification:
+
+- Score 1 → Minor
+- Score 2–3 → Moderate
+- Score 4+ → Severe
+
+---
+
+### Highest Bottleneck Detection
+
+Implemented tracking for:
+
+```go
+highestScore
+highestHop
+```
+
+Used to identify the most significant bottleneck in the traceroute path.
+
+---
+
+## Concepts Learned
+
+- Jitter analysis
+- RTT trend analysis
+- Hop-to-hop latency comparison
+- Network bottleneck detection
+- Weighted scoring systems
+- Network performance classification
+
+---
+
+## Problems Encountered
+
+### Missing Host Information
+
+Some hops did not respond to probes.
+
+Result:
+
+```text
+Host:
+IP:
+```
+
+Determined this is expected behavior for hops experiencing complete packet loss or routers that do not respond to ICMP requests.
+
+---
+
+### False RTT Increase Detection
+
+Discovered that RTT increases should only be calculated when the previous hop successfully responded.
+
+Added validation:
+
+```go
+if prev.SuccessfulProbes > 0 {
+    ...
+}
+```
+
+to avoid misleading results.
+
+---
+
+## Status
+
+Completed:
+
+- Packet loss tracking
+- Jitter analysis
+- RTT increase analysis
+- Bottleneck scoring
+- Severity classification
+- Highest bottleneck identification
+
+Next:
+
+- Route summary generation
+- Route comparison module
+- TCP latency analysis
+- Final reporting enhancements

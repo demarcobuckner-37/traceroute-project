@@ -1,20 +1,18 @@
 package main
 
 import (
-	"fmt"
 	"time"
 )
 
 func RunAnalyzeHops(hop []Hop) []Hop {
 
-	fmt.Printf("\nCalculating Average RTT for each hop...\n")
-
-	// Loop through each hop and calculate average RTT
-
+	//Analyze each hp and calculate network performance metrics
 	for i := range hop {
 
 		h := &hop[i]
 
+		//PACKET LOSS CALCULATION
+		//Percentage of probes that did not receive a response
 		if h.SentProbes > 0 {
 
 			h.PacketLoss = float64(h.SentProbes-h.SuccessfulProbes) / float64(h.SentProbes) * 100
@@ -23,13 +21,14 @@ func RunAnalyzeHops(hop []Hop) []Hop {
 			h.PacketLoss = 0
 		}
 
+		//Skip hops with no successful probes
 		if len(h.RTTs) == 0 {
 
 			continue
 		}
 
-		fmt.Printf("Hop: %d | RTTs: %v\n", h.TTL, h.RTTs)
-
+		//RTT STATISTICS
+		//Calculate average, min, max RTT and jitter for this hop based on successful probes
 		total := time.Duration(0)
 
 		for _, rtt := range h.RTTs {
@@ -45,6 +44,8 @@ func RunAnalyzeHops(hop []Hop) []Hop {
 
 		}
 
+		//JITTER CALCULATION
+		//Average variation between consecutive RTT samples
 		var totalDiff time.Duration
 
 		for i := 1; i < len(h.RTTs); i++ {
@@ -55,23 +56,17 @@ func RunAnalyzeHops(hop []Hop) []Hop {
 			}
 			totalDiff += diff
 		}
+
 		if len(h.RTTs) > 1 {
 			h.Jitter = totalDiff / time.Duration(len(h.RTTs)-1)
 		} else {
 			h.Jitter = 0
 		}
 
+		//Average RTT Calculation
+		//Mean latency across all successful probes
 		h.AvgRTT = total / time.Duration(len(h.RTTs))
-
-		fmt.Printf("Average RTT: %v\n", h.AvgRTT)
-		fmt.Printf("Min RTT: %v\n", h.MinRTT)
-		fmt.Printf("Max RTT: %v\n", h.MaxRTT)
-		fmt.Printf("Packet Loss: %.2f%%\n", h.PacketLoss)
-		fmt.Printf("Jitter: %v\n", h.Jitter)
-
-		fmt.Print("\n")
 
 	}
 	return hop
-
 }

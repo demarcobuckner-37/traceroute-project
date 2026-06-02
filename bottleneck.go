@@ -9,79 +9,90 @@ func RunBottleneckDetection(hop []Hop) []Hop {
 
 	fmt.Print("\nRunning Bottleneck Detection...\n")
 
+	//Track the most severe bottleneck found in the route
 	highestScore := 0
 	highestHop := 0
 
+	//Compare each hop against the previous
 	for i := 1; i < len(hop); i++ {
 		h := &hop[i]
 		prev := &hop[i-1]
 
+		//RTT INCREASE CALCULATION
+		//Mearsures latency growth between adjanceent hops
 		rttIncrease := h.AvgRTT - prev.AvgRTT
 		h.RTTIncrease = rttIncrease
 
 		score := 0
 
+		//Significant RTT increase may indicate a bottleneck or congestion point
 		if prev.SuccessfulProbes > 0 {
 
 			if rttIncrease > 30*time.Millisecond {
 
-				fmt.Printf("Significant RTT increase detected between Hop %d and Hop %d: %v\n", prev.TTL, h.TTL, rttIncrease)
-
+				h.RTTIncreaseFlag = true
 				score += 2
 			}
 		}
 
+		//PACKET LOSS DETECTION
+		//Heavily weighted because packet loss directly impacts network performance
 		if h.PacketLoss >= 99.9 {
 
-			fmt.Printf("Hop %d is unresponsive with 100%% packet loss\n", h.TTL)
-
+			h.HighPacketLossFlag = true
 			score += 4
 
 		} else if h.PacketLoss > 20 {
 
-			fmt.Printf("High packet loss detected at Hop %d: %.2f%%\n", h.TTL, h.PacketLoss)
-
+			h.HighPacketLossFlag = true
 			score += 2
 
 		}
 
+		//JITER DETECTION
+		//High jitter can indicate instability and congestion
 		if h.Jitter > 30*time.Millisecond {
 
-			fmt.Printf("High jitter detected at Hop %d: %v\n", h.TTL, h.Jitter)
+			h.HighJitterFlag = true
 			score++
 
 		}
 
+		// AVERAGE RTT DETECTION
+		// Detects consistently high latency.
 		if h.AvgRTT > 100*time.Millisecond {
 
-			fmt.Printf("High average RTT detected at Hop %d: %v\n", h.TTL, h.AvgRTT)
+			h.HighAvgRTTFlag = true
 			score += 2
 
 		}
 
+		// MAXIMUM RTT DETECTION
+		// Detects occasional latency spikes.
 		if h.MaxRTT > 200*time.Millisecond {
 
-			fmt.Printf("High max RTT detected at Hop %d: %v\n", h.TTL, h.MaxRTT)
+			h.HighMaxRTTFlag = true
 			score++
 
 		}
 
+		//Store overall bottleneck score
 		h.BottleneckScore = score
 
-		if score > 0 {
-
-			switch {
-			case score >= 4:
-				h.Severity = "Severe"
-			case score >= 2:
-				h.Severity = "Moderate"
-			case score > 0:
-				h.Severity = "Minor"
-
-			}
+		//Classify severity based on score
+		switch {
+		case score >= 4:
+			h.Severity = "Severe"
+		case score >= 2:
+			h.Severity = "Moderate"
+		case score > 0:
+			h.Severity = "Minor"
+		default:
+			h.Severity = "None"
 
 		}
 
+		//Display the most severe bottleneck found so far
 		if score > highestScore {
 			highestScore = score
 			highestHop = h.TTL
@@ -89,6 +100,7 @@ func RunBottleneckDetection(hop []Hop) []Hop {
 
 	}
 
+	//Display most significant bottleneck detected in the route
 	if highestScore > 0 {
 
 		fmt.Printf("\nHighest bottleneck score: %d at Hop %d\n", highestScore, highestHop)
