@@ -228,4 +228,3 @@ The primary goals of this project are to gain practical experience with:
 - Bottleneck Detection Techniques
 - Go Networking Libraries
 - Systems Programming
-- CCNA-Related Networking Concepts
