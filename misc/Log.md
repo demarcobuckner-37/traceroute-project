@@ -1151,3 +1151,93 @@ Next:
 - Route comparison module
 - TCP latency analysis
 - Final reporting enhancements
+
+## June 2, 2026
+
+### What I did
+
+- Refactored the traceroute analysis architecture
+- Removed console output from:
+  - `RunAnalyzeHops()`
+- Converted analysis functions into data-processing modules rather than reporting modules
+- Refactored:
+  - `RunBottleneckDetection()`
+- Added bottleneck-related fields to the `Hop` structure:
+  - `BottleneckScore`
+  - `Severity`
+  - `RTTIncrease`
+- Added bottleneck flags:
+  - `RTTIncreaseFlag`
+  - `HighPacketLossFlag`
+  - `HighJitterFlag`
+  - `HighAvgRTTFlag`
+  - `HighMaxRTTFlag`
+- Implemented weighted bottleneck scoring
+- Implemented automatic severity classification:
+  - None
+  - Minor
+  - Moderate
+  - Severe
+- Created:
+  ```go
+  PrintHopAnalysis()
+  ```
+  to separate route presentation from route analysis
+- Updated project documentation and README
+- Updated GitHub repository with latest project changes
+- Added:
+  ```text
+  .gitignore
+  ```
+  to prevent macOS metadata files from being tracked
+
+### What I learned
+
+- Why data collection, analysis, and reporting should be separated into different modules
+- Benefits of storing analysis results inside structs for reuse by future features
+- How bottleneck detection systems can use weighted scoring models
+- Why reporting logic should be isolated from calculation logic
+- How Git rebasing works when synchronizing local and remote repositories
+
+### Problems
+
+- Analysis functions contained presentation logic that made future expansion difficult
+- GitHub push failed because the remote repository contained commits not present locally
+- macOS `.DS_Store` files continued appearing in Git status output
+
+### Fixes
+
+- Moved reporting responsibilities into:
+  ```go
+  PrintHopAnalysis()
+  ```
+- Used:
+  ```bash
+  git pull --rebase origin main
+  ```
+  to synchronize with GitHub
+- Added:
+  ```text
+  .gitignore
+  ```
+  and removed `.DS_Store` from version control
+
+### Current Status
+
+- Traceroute route discovery is working
+- RTT analysis is working
+- Packet loss analysis is working
+- Jitter analysis is working
+- Bottleneck detection is working
+- Severity classification is working
+- Reporting module is implemented
+- Project documentation has been updated
+- GitHub repository is synchronized
+
+### Next Steps
+
+- Implement route summary generation
+- Implement route comparison
+- Add long-term route monitoring
+- Detect network instability trends
+- Create exportable route reports
