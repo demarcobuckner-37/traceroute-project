@@ -10,8 +10,9 @@ This project is a networking toolkit written in Go designed to explore low-level
 - Traceroute path discovery
 - RTT analysis
 - Network path analysis
+- Bottleneck detection
 
-The project is being developed as part of a directed study focused on networking fundamentals and CCNA-related concepts.
+The project is being developed as part of a directed study focused on networking fundamentals, network analysis, and CCNA-related concepts.
 
 ---
 
@@ -22,7 +23,7 @@ The project is being developed as part of a directed study focused on networking
 - Resolves hostnames using DNS
 - Establishes TCP connections
 - Measures connection latency
-- Calculates round-trip timing information
+- Calculates connection timing statistics
 
 ---
 
@@ -31,14 +32,14 @@ The project is being developed as part of a directed study focused on networking
 - Sends ICMP Echo Requests
 - Receives ICMP Echo Replies
 - Measures RTT values
-- Tracks:
-  - average RTT
-  - minimum RTT
-  - maximum RTT
-  - packet loss
+- Calculates:
+  - Average RTT
+  - Minimum RTT
+  - Maximum RTT
+  - Packet Loss
 - Validates:
-  - process IDs
-  - sequence numbers
+  - Process IDs
+  - Sequence Numbers
 
 ---
 
@@ -50,85 +51,158 @@ The project is being developed as part of a directed study focused on networking
   - ICMP Time Exceeded messages
   - ICMP Echo Replies
 - Discovers intermediate routers between source and destination
-- Stores route information using a custom:
+- Records RTT measurements for every hop
+- Tracks successful and failed probes
 
-```go
-type Hop struct {
-	TTL       int
-	RTTs      []time.Duration
-	Host      string
-	IPAddress string
-}
+---
 
-## RTT Analysis System
+## Hop Analysis System
 
-- Separates route collection from analysis logic
-- Calculates average RTT per hop
-- Dynamically handles variable RTT sample counts
-- Supports future analysis extensions such as:
-  - bottleneck detection
-  - jitter analysis
-  - route comparison
-  - instability detection
+Calculates performance metrics for every discovered hop:
+
+- Average RTT
+- Minimum RTT
+- Maximum RTT
+- Packet Loss
+- Jitter
+
+The analysis engine is separated from route collection to allow future expansion and testing.
+
+---
+
+## Bottleneck Detection System
+
+Analyzes each hop and identifies potential network bottlenecks using:
+
+- RTT increases between hops
+- Packet loss thresholds
+- Jitter thresholds
+- Average RTT thresholds
+- Maximum RTT thresholds
+
+Each hop receives:
+
+- Bottleneck Score
+- Severity Classification
+
+### Severity Levels
+
+- None
+- Minor
+- Moderate
+- Severe
+
+The system also identifies the highest-scoring bottleneck within the route.
 
 ---
 
 # Technologies Used
 
 - Go (Golang)
-- ICMP networking
-- Raw sockets
-- IPv4 packet manipulation
-- DNS resolution
-- TCP networking
+- ICMP Networking
+- Raw Sockets
+- IPv4 Packet Manipulation
+- DNS Resolution
+- TCP Networking
 
 ---
 
 # Key Networking Concepts Explored
 
 - TTL (Time To Live)
-- ICMP packet structure
+- ICMP Packet Structure
 - Echo Requests and Echo Replies
-- ICMP Time Exceeded messages
-- Packet loss
-- RTT measurement
+- ICMP Time Exceeded Messages
+- Packet Loss
+- Jitter
+- RTT Measurement
+- Route Discovery
+- Raw Socket Networking
+- Network Bottleneck Detection
+- Network Path Analysis
+
+---
+
+# Project Architecture
+
+The project is divided into independent components:
+
+### RunTraceroute()
+
+Responsible for:
+
 - Route discovery
-- Raw socket networking
-- Network path analysis
+- ICMP packet transmission
+- ICMP response handling
+- Hop data collection
+
+### RunAnalyzeHops()
+
+Responsible for:
+
+- Average RTT calculation
+- Minimum RTT calculation
+- Maximum RTT calculation
+- Packet loss calculation
+- Jitter calculation
+
+### RunBottleneckDetection()
+
+Responsible for:
+
+- RTT increase analysis
+- Bottleneck scoring
+- Severity classification
+- Bottleneck flag generation
+
+### PrintHopAnalysis()
+
+Responsible for:
+
+- Reporting
+- Route presentation
+- Bottleneck reporting
 
 ---
 
 # Current Project Status
 
-Current implemented components:
+## Implemented
 
-- DNS resolution
-- TCP latency measurement
-- ICMP ping tool
-- Traceroute route discovery
-- RTT statistics
-- Average RTT analysis per hop
-- Dynamic hop storage using Go structs
+- DNS Resolution
+- TCP Latency Measurement
+- ICMP Ping Tool
+- Traceroute Route Discovery
+- RTT Statistics
+- Average RTT Analysis
+- Minimum RTT Analysis
+- Maximum RTT Analysis
+- Packet Loss Analysis
+- Jitter Analysis
+- Bottleneck Detection
+- Severity Classification
+- Dynamic Hop Storage Using Go Structs
 
 ---
 
 # Planned Features
 
-- Bottleneck detection
-- Jitter calculations
-- Route comparison
-- Long-term route monitoring
-- Network instability analysis
-- Exportable route summaries
+- Route Summary Generation
+- Route Comparison
+- Long-Term Route Monitoring
+- Network Instability Analysis
+- Exportable Reports
+- Historical Route Tracking
 
 ---
 
 # Running the Project
 
-Run the full project using:
+Run the project using:
 
 ```bash
 sudo go run .
+```
 
 Administrator privileges are required for raw ICMP socket operations.
 
@@ -139,16 +213,19 @@ Administrator privileges are required for raw ICMP socket operations.
 - google.com
 - github.com
 - cloudflare.com
+- espn.com
 
 ---
 
 # Project Goals
 
-The primary goal of this project is to gain deeper understanding of:
+The primary goals of this project are to gain practical experience with:
 
-- networking fundamentals
-- systems programming
-- Go networking libraries
-- ICMP/TCP behavior
-- traceroute implementation techniques
-- network analysis concepts
+- Network Troubleshooting Concepts
+- Traceroute Implementation
+- ICMP and TCP Networking
+- Network Performance Analysis
+- Bottleneck Detection Techniques
+- Go Networking Libraries
+- Systems Programming
+- CCNA-Related Networking Concepts
