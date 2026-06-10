@@ -6,13 +6,33 @@ import (
 	"time"
 )
 
-func RunLatencyTool(host string) {
+type TCPResult struct {
+	//Target host that was tested
+	Host string
 
-	// OUTPUT FORMATTING
-	// Print basic information to the terminal
-	fmt.Println("You entered:\n", host)
-	fmt.Println()
-	fmt.Println("IP Adresses:")
+	// Time required to resolve hostname to IP address
+	DNSLookupTime time.Duration
+
+	// Average TCP connection latency across successful probes
+	AvgConnectionTime time.Duration
+
+	// Fastest successful TCP connection
+	MinConnectionTime time.Duration
+
+	// Slowest successful TCP connection
+	MaxConnectionTime time.Duration
+
+	// Number of successful TCP connections established
+	SuccessfulConnections int
+
+	// Percentage of failed connection attempts
+	PacketLoss float64
+}
+
+func RunLatencyTool(host string) TCPResult {
+
+	// Display all IP addresses returned by DNS lookup
+	fmt.Println("IP Addresses:")
 
 	//LATENCY TIMING
 	// Start overall program timer
@@ -29,7 +49,7 @@ func RunLatencyTool(host string) {
 	// Stop program if DNS lookup fails
 	if err != nil {
 		fmt.Println("Error:", err)
-		return
+		return TCPResult{}
 	}
 	// OUTPUT FORMATTING
 	// Print all resolved IP addresses
@@ -39,12 +59,17 @@ func RunLatencyTool(host string) {
 
 	fmt.Println("\nTCP Connections:")
 
-	// TCP CONNECTIONS
-	// Add port 80 (HTTP) to hostname
-	address := host + ":80"
+	// DESTINATION ADDRESS
+	// Combine hostname and HTTPS port into a valid network address
+	address := net.JoinHostPort(host, "443")
 
 	var totalConnTime time.Duration
 	var avgConnTime time.Duration
+
+	var minConnTime time.Duration
+	var maxConnTime time.Duration
+
+	var successfulConnections int
 
 	// Perform multiple TCP probes to measure latency
 	for i := 0; i < 3; i++ {
@@ -57,27 +82,48 @@ func RunLatencyTool(host string) {
 
 		// Measure connection latency
 		connElapsed := time.Since(connTime)
+
 		fmt.Println("Connection time:", connElapsed)
 
-		// ERROR HANDLING
-		// Check if TCP connection succeeded
-		if err != nil {
-			fmt.Println("Error:", err)
-		} else {
-			// OUTPUT FORMATTING
-			// Print successful connection info
+		//CONNECTION STATISTICS
+		if err == nil {
+
+			if successfulConnections == 0 {
+				//First succesful probe is baseline
+				minConnTime = connElapsed
+				maxConnTime = connElapsed
+			} else {
+
+				//Update minimum connection latency
+				if connElapsed < minConnTime {
+					minConnTime = connElapsed
+				}
+
+				//Update maximum connection latency
+				if connElapsed > maxConnTime {
+					maxConnTime = connElapsed
+				}
+			}
+
+			//Track successful connections and total latency
+			successfulConnections++
+			totalConnTime += connElapsed
+
 			fmt.Println("Connection successful to", conn, "on", host)
 
-			// Close connection after each probe
 			conn.Close()
+
+		} else {
+			fmt.Println("Error:", err)
 		}
 
-		// Update running total and average latency
-		totalConnTime += connElapsed
-		avgConnTime = (totalConnTime) / time.Duration(i+1)
 	}
 
-	fmt.Println("\nConnection successful to:", address)
+	// AVERAGE CONNECTION TIME
+	// Calculate mean TCP connection latency using only successful probes
+	if successfulConnections > 0 {
+		avgConnTime = totalConnTime / time.Duration(successfulConnections)
+	}
 
 	// LATENCY TIMING
 	// Measure total runtime
@@ -100,5 +146,27 @@ func RunLatencyTool(host string) {
 	fmt.Printf("Average Connection Time: %s\n", avgConnTime)
 
 	fmt.Printf("Total Probe time: %s\n", totalConnTime)
+
+	fmt.Printf("Minimum Connection Time: %s\n", minConnTime)
+
+	fmt.Printf("Maximum Connection Time: %s\n", maxConnTime)
+
+	fmt.Printf("Successful Connections: %d/3\n", successfulConnections)
+
+	// PACKET LOSS CALCULATION
+	// Percentage of connection attempts that failed
+	packetLoss := float64(3-successfulConnections) / 3 * 100
+
+	fmt.Printf("Packet Loss: %.2f%%\n", packetLoss)
+
+	return TCPResult{
+		Host:                  host,
+		DNSLookupTime:         dnsElapsed,
+		AvgConnectionTime:     avgConnTime,
+		MinConnectionTime:     minConnTime,
+		MaxConnectionTime:     maxConnTime,
+		SuccessfulConnections: successfulConnections,
+		PacketLoss:            packetLoss,
+	}
 
 }

@@ -1,64 +1,43 @@
-# Traceroute Project
+# Traceroute & Network Diagnostics Toolkit
 
 ## Overview
 
-This project is a networking toolkit written in Go designed to explore low-level networking concepts related to:
+This project is a command-line network diagnostics toolkit written in **Go (Golang)**. It was developed as part of a directed study to gain hands-on experience with low-level networking concepts, systems programming, and network analysis techniques commonly encountered in network engineering and cybersecurity.
+
+The toolkit combines several core networking utilities into a single application, including:
 
 - DNS resolution
 - TCP latency testing
 - ICMP ping operations
 - Traceroute path discovery
-- RTT analysis
-- Network path analysis
-- Bottleneck detection
+- Hop-by-hop route analysis
+- Network bottleneck detection
+- Fault injection and resilience testing
+- Route comparison
+- JSON export
 
-The project is being developed as part of a directed study focused on networking fundamentals, network analysis, and CCNA-related concepts.
+The project emphasizes understanding how network traffic flows across the Internet while providing practical experience working with raw sockets, packet structures, and network performance metrics.
 
 ---
 
 # Features
 
-## TCP Latency Tool
+## Traceroute Engine
 
-- Resolves hostnames using DNS
-- Establishes TCP connections
-- Measures connection latency
-- Calculates connection timing statistics
-
----
-
-## ICMP Ping Tool
-
-- Sends ICMP Echo Requests
-- Receives ICMP Echo Replies
-- Measures RTT values
-- Calculates:
-  - Average RTT
-  - Minimum RTT
-  - Maximum RTT
-  - Packet Loss
-- Validates:
-  - Process IDs
-  - Sequence Numbers
-
----
-
-## Traceroute Tool
-
-- Uses TTL manipulation to discover network routes
+- Discovers network paths using **TTL manipulation**
 - Sends multiple probes per hop
 - Handles:
   - ICMP Time Exceeded messages
   - ICMP Echo Replies
-- Discovers intermediate routers between source and destination
-- Records RTT measurements for every hop
-- Tracks successful and failed probes
+- Records RTT measurements for each probe
+- Tracks successful and failed responses
+- Dynamically stores route data for later analysis
 
 ---
 
-## Hop Analysis System
+## Hop Analytics
 
-Calculates performance metrics for every discovered hop:
+The analytics engine processes collected traceroute data and calculates:
 
 - Average RTT
 - Minimum RTT
@@ -66,7 +45,7 @@ Calculates performance metrics for every discovered hop:
 - Packet Loss
 - Jitter
 
-The analysis engine is separated from route collection to allow future expansion and testing.
+Route analysis is separated from data collection, allowing metrics to be recalculated or expanded independently.
 
 ---
 
@@ -74,7 +53,7 @@ The analysis engine is separated from route collection to allow future expansion
 
 Analyzes each hop and identifies potential network bottlenecks using:
 
-- RTT increases between hops
+- RTT increases between adjacent hops
 - Packet loss thresholds
 - Jitter thresholds
 - Average RTT thresholds
@@ -92,7 +71,71 @@ Each hop receives:
 - Moderate
 - Severe
 
-The system also identifies the highest-scoring bottleneck within the route.
+The system also identifies the highest-scoring bottleneck along the route.
+
+---
+
+## Fault Injection System
+
+Simulates degraded network conditions for testing and analysis by introducing:
+
+- Artificial packet loss
+- Artificial network latency
+
+This feature provides a simple form of chaos testing, allowing route behavior and analytics to be observed under adverse network conditions.
+
+---
+
+## Route Comparison
+
+Compares a baseline traceroute against a fault-injected traceroute to identify:
+
+- Latency differences
+- Hop-by-hop performance changes
+- Potential bottleneck shifts
+- Overall route behavior under simulated faults
+
+---
+
+## ICMP Ping Tool
+
+- Sends ICMP Echo Requests
+- Receives ICMP Echo Replies
+- Measures RTT values
+- Calculates:
+  - Average RTT
+  - Minimum RTT
+  - Maximum RTT
+  - Packet Loss
+  - Jitter
+- Validates:
+  - Process IDs
+  - Sequence Numbers
+
+---
+
+## TCP Latency Tool
+
+- Resolves hostnames using DNS
+- Measures DNS lookup time
+- Establishes TCP connections
+- Calculates:
+  - Average connection time
+  - Minimum connection time
+  - Maximum connection time
+  - Connection success rate
+  - Packet loss percentage
+
+---
+
+## JSON Export
+
+Export diagnostic data for future analysis or reporting:
+
+- Route A (Baseline Traceroute)
+- Route B (Fault-Injected Traceroute)
+- Ping Results
+- TCP Latency Results
 
 ---
 
@@ -100,34 +143,39 @@ The system also identifies the highest-scoring bottleneck within the route.
 
 - Go (Golang)
 - ICMP Networking
-- Raw Sockets
+- Raw Socket Programming
 - IPv4 Packet Manipulation
 - DNS Resolution
 - TCP Networking
+- JSON Serialization
+- Command-Line Interface (CLI) Development
 
 ---
 
 # Key Networking Concepts Explored
 
-- TTL (Time To Live)
+- Time To Live (TTL)
 - ICMP Packet Structure
 - Echo Requests and Echo Replies
 - ICMP Time Exceeded Messages
+- DNS Resolution
+- TCP Connection Establishment
+- Round-Trip Time (RTT)
 - Packet Loss
 - Jitter
-- RTT Measurement
 - Route Discovery
-- Raw Socket Networking
 - Network Bottleneck Detection
 - Network Path Analysis
+- Fault Injection
+- Basic Chaos Engineering Concepts
 
 ---
 
 # Project Architecture
 
-The project is divided into independent components:
+The project is divided into independent components to simplify testing and future expansion.
 
-### RunTraceroute()
+### `RunTraceroute()`
 
 Responsible for:
 
@@ -136,7 +184,7 @@ Responsible for:
 - ICMP response handling
 - Hop data collection
 
-### RunAnalyzeHops()
+### `RunAnalyzeHops()`
 
 Responsible for:
 
@@ -146,7 +194,7 @@ Responsible for:
 - Packet loss calculation
 - Jitter calculation
 
-### RunBottleneckDetection()
+### `RunBottleneckDetection()`
 
 Responsible for:
 
@@ -155,13 +203,48 @@ Responsible for:
 - Severity classification
 - Bottleneck flag generation
 
-### PrintHopAnalysis()
+### `RouteSummary()`
 
 Responsible for:
 
-- Reporting
-- Route presentation
+- Route statistics generation
+- High-level route reporting
+
+### `RunRouteComparison()`
+
+Responsible for:
+
+- Comparing baseline and fault-injected routes
+- Identifying latency differences
+- Highlighting route behavior changes
+
+### `PrintHopAnalysis()`
+
+Responsible for:
+
+- Detailed hop reporting
 - Bottleneck reporting
+- Analytics presentation
+
+### `RunPingTool()`
+
+Responsible for:
+
+- ICMP ping diagnostics
+- RTT and packet loss measurement
+
+### `RunLatencyTool()`
+
+Responsible for:
+
+- DNS timing measurements
+- TCP connection latency analysis
+
+### `ExportJSON()`
+
+Responsible for:
+
+- Exporting traceroute, ping, and TCP latency results to JSON files
 
 ---
 
@@ -173,26 +256,27 @@ Responsible for:
 - TCP Latency Measurement
 - ICMP Ping Tool
 - Traceroute Route Discovery
+- Hop Analytics
 - RTT Statistics
-- Average RTT Analysis
-- Minimum RTT Analysis
-- Maximum RTT Analysis
 - Packet Loss Analysis
 - Jitter Analysis
 - Bottleneck Detection
-- Severity Classification
+- Fault Injection
+- Route Comparison
+- Route Summaries
+- JSON Export
 - Dynamic Hop Storage Using Go Structs
+- Interactive CLI Menu System
 
 ---
 
 # Planned Features
 
-- Route Summary Generation
-- Route Comparison
 - Long-Term Route Monitoring
-- Network Instability Analysis
-- Exportable Reports
 - Historical Route Tracking
+- Network Instability Trend Analysis
+- Exportable Report Generation
+- Enhanced Visualization and Reporting
 
 ---
 
@@ -204,7 +288,7 @@ Run the project using:
 sudo go run .
 ```
 
-Administrator privileges are required for raw ICMP socket operations.
+> **Note:** Administrator (root) privileges are required for raw ICMP socket operations.
 
 ---
 
@@ -221,10 +305,19 @@ Administrator privileges are required for raw ICMP socket operations.
 
 The primary goals of this project are to gain practical experience with:
 
-- Network Troubleshooting Concepts
+- Network Troubleshooting
 - Traceroute Implementation
 - ICMP and TCP Networking
+- Raw Socket Programming
 - Network Performance Analysis
 - Bottleneck Detection Techniques
+- Fault Injection and Resilience Testing
 - Go Networking Libraries
 - Systems Programming
+- CCNA and Network Engineering Concepts
+
+---
+
+# Future Direction
+
+This project serves as a learning platform for exploring advanced networking and systems concepts. Future iterations may include long-term route monitoring, historical route analysis, enhanced reporting capabilities, and additional diagnostic utilities to expand the toolkit into a more comprehensive network analysis framework.

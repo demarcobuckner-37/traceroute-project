@@ -1241,3 +1241,779 @@ Next:
 - Add long-term route monitoring
 - Detect network instability trends
 - Create exportable route reports
+
+# June 3, 2026
+
+## Objectives
+
+- Implement route comparison between traceroute runs
+- Detect network performance changes over time
+- Add reverse DNS hostname resolution
+- Improve traceroute reporting output
+
+## Work Completed
+
+### Route Comparison Module
+
+Created:
+
+```go
+RunRouteComparison()
+```
+
+The function compares two traceroute runs on a hop-by-hop basis.
+
+Implemented:
+
+- TTL validation
+- Route change detection
+- RTT comparison
+- Packet loss comparison
+- Jitter comparison
+- Bottleneck score comparison
+
+The comparison system now identifies significant performance differences between traceroute executions.
+
+---
+
+### Route Change Detection
+
+Added support for detecting route changes between traceroute runs.
+
+Implemented:
+
+```go
+if h1.IPAddress != h2.IPAddress
+```
+
+When a hop changes IP addresses between runs, the program reports a route change and skips metric comparisons for that hop.
+
+---
+
+### Performance Change Detection
+
+Implemented threshold-based performance analysis.
+
+Current thresholds:
+
+| Metric | Threshold |
+|----------|----------|
+| RTT | 30 ms |
+| Packet Loss | 20% |
+| Jitter | 30 ms |
+
+The comparison system detects both increases and decreases in:
+
+- RTT
+- Packet Loss
+- Jitter
+- Bottleneck Score
+
+---
+
+### Reverse DNS Integration
+
+Added reverse DNS lookups using:
+
+```go
+net.LookupAddr()
+```
+
+Implemented hostname resolution for traceroute hops.
+
+Example output:
+
+```text
+Host: tmo-g5ar.lan
+IP Address: 192.168.12.1
+```
+
+When no PTR record exists, the program falls back to displaying the IP address.
+
+Example:
+
+```text
+Host: 10.177.62.218
+IP Address: 10.177.62.218
+```
+
+---
+
+### Output Formatting Improvements
+
+Improved route comparison reporting.
+
+Added:
+
+- Route labels
+- Improved metric formatting
+- Hostname support
+- Route length change detection
+- Better handling of timed-out hops
+
+Timed-out hops now display:
+
+```text
+*
+```
+
+instead of blank values.
+
+---
+
+## Concepts Learned
+
+- Reverse DNS lookups
+- PTR records
+- Historical route comparison
+- Network path analysis
+- Route change detection
+- Threshold-based performance analysis
+- Hostname resolution in Go
+
+---
+
+## Problems Encountered
+
+### Route Change Output Contained Blank Values
+
+Cause:
+
+Timed-out hops produced empty IP addresses.
+
+Example:
+
+```text
+Route change detected at Hop 5:  ->
+```
+
+### Reverse DNS Lookup Failures
+
+Many intermediate routers did not return hostnames.
+
+Investigation showed this behavior is expected because many routers do not publish PTR records.
+
+---
+
+## Fixes
+
+Added fallback values:
+
+```go
+if ip == "" {
+    ip = "*"
+}
+```
+
+Implemented hostname fallback logic:
+
+```go
+host := ip
+```
+
+when reverse DNS lookups fail.
+
+Improved route change reporting by replacing missing addresses with:
+
+```text
+*
+```
+
+---
+
+## Current Status
+
+Completed:
+
+- Route comparison module
+- RTT comparison
+- Packet loss comparison
+- Jitter comparison
+- Bottleneck comparison
+- Route change detection
+- Reverse DNS hostname resolution
+- Improved reporting output
+
+Project now supports both route discovery and route comparison analysis.
+
+---
+
+## Next Steps
+
+- Add route summary generation
+- Export traceroute results to files
+- Compare historical traceroute runs
+- Generate long-term network performance reports
+
+# June 4, 2026
+
+## Objectives
+- Continue development of enhanced traceroute tool.
+- Complete reverse DNS hostname resolution feature.
+- Improve Route Comparison analysis.
+- Finalize fault injection implementation for Route 2 testing.
+- Clean up hop analysis output.
+
+## Work Completed
+
+### Reverse DNS Integration
+- Created `ResolveHost()` helper function to perform reverse DNS lookups using `net.LookupAddr()`.
+- Integrated hostname resolution into traceroute processing.
+- Stored resolved hostnames directly in the `Hop` struct instead of storing only IP addresses.
+- Updated both `ICMPTypeTimeExceeded` and `ICMPTypeEchoReply` handling to save hostnames.
+- Modified traceroute output to display hostnames when available.
+
+### Hop Analysis Improvements
+- Removed duplicate reverse DNS lookups from `PrintHopAnalysis()`.
+- Simplified analysis output to use:
+  - `h.Host`
+  - `h.IPAddress`
+- Removed unused imports:
+  - `net`
+  - `strings`
+- Added fallback handling for missing hostnames and IP addresses.
+
+### Route Comparison Improvements
+- Added route change detection when IP addresses differ between runs.
+- Added reporting for:
+  - RTT increases and decreases
+  - Packet loss increases and decreases
+  - Jitter increases and decreases
+  - Bottleneck score increases and decreases
+- Added route length comparison.
+- Improved output formatting to clearly distinguish Route 1 and Route 2 statistics.
+
+### Fault Injection System
+- Implemented fault injection support using:
+
+```go
+type Fault struct {
+    Enabled  bool
+    DropRate float64
+    Delay    time.Duration
+}
+```
+
+- Added simulated packet loss using random drops.
+- Added simulated network delay using randomized delays.
+- Ensured packet loss affects:
+  - Packet loss percentage
+  - Bottleneck detection
+  - Route comparison results
+- Ensured random delay affects:
+  - RTT
+  - Jitter
+  - Bottleneck scoring
+
+### Code Cleanup
+- Fixed hostname storage logic.
+- Eliminated duplicate DNS lookups.
+- Reviewed bottleneck scoring behavior.
+- Reviewed severity calculations.
+- Corrected several formatting and variable usage issues.
+
+## Testing Performed
+
+### Normal Route Test
+- Successfully traced route to Google.
+- Route completed in 12 hops.
+- Hostnames were resolved where available.
+- RTT, jitter, packet loss, and bottleneck metrics calculated correctly.
+
+### Fault Injection Test
+- Ran Route 2 with simulated packet loss and delay.
+- Verified increased:
+  - RTT
+  - Packet loss
+  - Jitter
+  - Bottleneck scores
+- Confirmed Route Comparison detected injected faults.
+
+## Results
+- Reverse DNS feature completed.
+- Fault injection feature completed.
+- Route Comparison feature substantially improved.
+- Hop Analysis output simplified and optimized.
+- Traceroute project now includes:
+  - RTT analysis
+  - Packet loss analysis
+  - Jitter analysis
+  - Bottleneck detection
+  - Route comparison
+  - Fault injection
+  - Reverse DNS hostname resolution
+
+## Next Steps
+- Implement JSON export for route results.
+- Create Route Summary statistics.
+- Add JSON import/export for historical route comparison.
+- Begin documenting results and methodology for CSCE 4890 paper.
+
+# June 5, 2026 – Traceroute Project Log
+
+## Objectives
+- Continue development of the enhanced traceroute tool.
+- Improve fault injection testing.
+- Investigate Route 2 termination issues.
+- Improve hostname resolution and route comparison features.
+- Debug delayed ICMP Echo Reply behavior.
+
+---
+
+## Work Completed
+
+### Reverse DNS Hostname Resolution
+- Implemented reverse DNS lookups using `net.LookupAddr()`.
+- Modified hop analysis output to display hostnames when available.
+- Added fallback behavior to display IP addresses when no hostname is returned.
+- Verified that reverse DNS lookups do not affect RTT measurements because RTT timing is completed before hostname resolution occurs.
+
+### Route Comparison Improvements
+- Refined route comparison output to detect:
+  - RTT increases and decreases
+  - Packet loss increases and decreases
+  - Jitter increases and decreases
+  - Bottleneck score changes
+  - Route path changes
+- Added route length comparison to detect differences in hop counts between traceroute runs.
+- Improved output formatting to clearly display Route 1 versus Route 2 statistics.
+
+### Fault Injection Development
+- Expanded fault injection functionality using the `Fault` structure.
+- Implemented:
+  - Simulated packet loss
+  - Simulated network delay
+- Used randomized values generated through Go's `rand` package.
+- Successfully created degraded Route 2 conditions for testing route comparison and bottleneck detection.
+
+### Route 2 Debugging
+- Investigated why Route 2 continued running after reaching the destination.
+- Added debugging output for:
+  - Sequence numbers
+  - Expected versus received probe identifiers
+  - Destination detection logic
+- Discovered that delayed ICMP Echo Replies were being read from the socket buffer after later probes had already been sent.
+- Identified stale Echo Replies as the primary cause of out-of-order sequence validation failures.
+
+### Probe Sequence Improvements
+- Modified ICMP sequence numbers from:
+
+```go
+Seq: ttl
+```
+
+to:
+
+```go
+Seq: ttl*10 + i
+```
+
+- Assigned unique sequence numbers to each probe.
+- Added debugging output to compare expected and received sequence values.
+
+### Echo Reply Validation
+- Added validation logic to ensure replies matched the correct process ID and sequence number.
+- Verified that delayed replies from previous probes were causing out-of-order matches.
+- Confirmed that sequence validation was working correctly after debugging.
+
+### Destination Detection Fixes
+- Verified that Route 1 terminates correctly when the destination responds.
+- Corrected Route 2 termination behavior.
+- Removed duplicate destination notifications.
+- Reviewed loop termination behavior and determined that collecting all three destination probes provides better RTT statistics.
+
+### Fault Injection Output Improvements
+- Identified an issue where simulated packet loss caused probe output to disappear completely.
+- Planned improvement:
+  - Display simulated packet loss as visible probe failures.
+  - Print timeout messages for dropped probes.
+- This will make packet-loss behavior easier to analyze and explain in the final report.
+
+---
+
+## Results
+- Reverse DNS resolution successfully integrated.
+- Route comparison functionality expanded.
+- Fault injection successfully generates degraded network conditions.
+- Route 2 destination detection bug resolved.
+- Unique probe sequence numbers implemented.
+- Route comparison correctly detects increased latency, packet loss, jitter, and bottleneck scores under fault-injected conditions.
+- Debugging output confirmed delayed Echo Replies were responsible for earlier Route 2 issues.
+
+---
+
+## Concepts Learned
+- Reverse DNS lookups using `net.LookupAddr()`
+- ICMP Echo Reply validation
+- Socket buffer behavior
+- Sequence number tracking
+- Delayed packet handling
+- Fault injection techniques
+- Route comparison analysis
+- Network performance degradation metrics
+
+---
+
+## Next Steps
+- Export Route 1 and Route 2 results to JSON.
+- Create a structured route report format.
+- Save comparison results to JSON.
+- Improve packet-loss simulation output.
+- Begin generating reusable reports from collected traceroute data.
+- Investigate graphing and visualization options for route comparison metrics.
+
+# June 6, 2026
+
+## Objective
+Continue development of the Go-based network diagnostics application by integrating all tools into a unified menu-driven interface, improving result handling, and implementing JSON export functionality.
+
+---
+
+## Work Completed
+
+### Interactive Menu System
+
+Expanded the application into a menu-driven network diagnostics tool.
+
+Added support for:
+
+1. Run Traceroute
+2. Run Traceroute with Fault Injection
+3. Compare Routes
+4. Export Route A JSON
+5. Export Route B JSON
+6. Change Host
+7. Run Ping Tool
+8. Run TCP Latency Tool
+9. Export Ping JSON
+10. Export TCP JSON
+11. Exit
+
+Implemented persistent host selection so the user can run multiple diagnostics against the same destination without re-entering the hostname.
+
+---
+
+### Host Management
+
+Added host switching functionality.
+
+Implemented logic to clear previously collected results when the host changes:
+
+```go
+routeA = nil
+routeB = nil
+
+pingResult = PingResult{}
+tcpResult = TCPResult{}
+```
+
+This prevents exporting stale results collected from a previous destination.
+
+---
+
+### Ping Tool Refactoring
+
+Created a reusable result structure:
+
+```go
+type PingResult struct {
+    Host       string
+    AvgRTT     time.Duration
+    MinRTT     time.Duration
+    MaxRTT     time.Duration
+    Jitter     time.Duration
+    PacketLoss float64
+}
+```
+
+Added:
+
+- Average RTT calculation
+- Minimum RTT tracking
+- Maximum RTT tracking
+- Jitter calculation
+- Packet loss calculation
+- Reverse DNS hostname resolution
+- Structured result storage
+
+Modified `RunPingTool()` to return a `PingResult` structure.
+
+Added summary reporting and JSON export support.
+
+---
+
+### Jitter Calculation
+
+Implemented jitter calculation using RTT variation between consecutive probes.
+
+```go
+diff := rtts[i] - rtts[i-1]
+
+if diff < 0 {
+    diff = -diff
+}
+
+totalDiff += diff
+```
+
+Average jitter is calculated as:
+
+```go
+jitter = totalDiff / time.Duration(len(rtts)-1)
+```
+
+---
+
+### TCP Latency Tool Refactoring
+
+Created a reusable result structure:
+
+```go
+type TCPResult struct {
+    Host                  string
+    DNSLookupTime         time.Duration
+    AvgConnectionTime     time.Duration
+    MinConnectionTime     time.Duration
+    MaxConnectionTime     time.Duration
+    SuccessfulConnections int
+    PacketLoss            float64
+}
+```
+
+Added:
+
+- DNS lookup timing
+- Average connection latency
+- Minimum connection latency
+- Maximum connection latency
+- Successful connection tracking
+- Packet loss calculation
+- Structured result storage
+
+Modified `RunLatencyTool()` to return a `TCPResult`.
+
+Added menu integration and JSON export support.
+
+---
+
+### TCP Tool Improvements
+
+Changed:
+
+```go
+address := host + ":80"
+```
+
+to:
+
+```go
+address := net.JoinHostPort(host, "443")
+```
+
+Benefits:
+
+- Safer hostname and port handling
+- IPv6 compatibility
+- Uses HTTPS port instead of HTTP
+
+---
+
+### Connection Statistics
+
+Improved TCP connection analysis.
+
+Added:
+
+- Minimum connection time tracking
+- Maximum connection time tracking
+- Successful connection counting
+
+Only successful connections are included in latency calculations.
+
+```go
+if successfulConnections > 0 {
+    avgConnTime = totalConnTime / time.Duration(successfulConnections)
+}
+```
+
+---
+
+### Packet Loss Calculation
+
+Added TCP packet loss calculation.
+
+```go
+packetLoss := float64(3-successfulConnections) / 3 * 100
+```
+
+Stored packet loss inside the TCPResult structure and displayed it in the menu summary.
+
+---
+
+### JSON Export System
+
+Refactored export functionality to support multiple data types.
+
+Changed:
+
+```go
+func ExportJSON(filename string, hops []Hop)
+```
+
+to:
+
+```go
+func ExportJSON(filename string, data any) error
+```
+
+Added export support for:
+
+- Route A results
+- Route B results
+- Ping results
+- TCP results
+
+---
+
+### JSON Export Debugging
+
+Encountered compiler errors:
+
+```text
+undefined: hops
+```
+
+and
+
+```text
+cannot use data (variable of interface type any) as []byte
+```
+
+Cause:
+
+- Export function still referenced a traceroute-specific variable (`hops`)
+- Attempted to write a generic interface directly to a file
+
+Fix:
+
+```go
+jsonData, err := json.MarshalIndent(data, "", "    ")
+```
+
+and
+
+```go
+os.WriteFile(filename, jsonData, 0644)
+```
+
+This allowed any supported structure to be exported as JSON.
+
+---
+
+### Traceroute Testing
+
+Continued testing fault injection behavior.
+
+Observed:
+
+- Simulated packet loss
+- Simulated latency
+- Out-of-order ICMP replies
+
+Confirmed that delayed replies from earlier probes can arrive after later probes when fault injection is enabled.
+
+Reviewed destination detection logic and traceroute termination behavior.
+
+---
+
+### Documentation and Commenting
+
+Improved comments throughout:
+
+- Traceroute
+- Ping Tool
+- TCP Latency Tool
+- Hop Analysis
+- Bottleneck Detection
+- Reverse DNS Resolution
+- Menu System
+
+Added section headers and explanatory comments for calculations and network analysis logic.
+
+---
+
+## Current Project Status
+
+### Completed Components
+
+- DNS Resolution
+- Reverse DNS Resolution
+- ICMP Ping Tool
+- TCP Latency Tool
+- Traceroute
+- Fault Injection
+- Hop Analysis
+- Bottleneck Detection
+- Route Comparison
+- JSON Export
+- Interactive Menu System
+
+### Next Steps
+
+- Complete JSON export testing
+- Verify exported file contents
+- Perform testing against multiple hosts
+- Begin organizing report sections for the directed study paper
+- Continue documenting implementation details and testing results
+
+## June 9, 2026
+
+### Menu System
+- Corrected main menu numbering and option alignment.
+- Implemented a dedicated **Hop Analytics** submenu.
+- Added submenu navigation logic to return to the main menu without terminating the application.
+- Improved overall menu organization and usability.
+
+### Hop Analytics
+- Added support for viewing Route A summaries.
+- Added support for viewing Route B summaries.
+- Added support for detailed Route A hop analysis.
+- Added support for detailed Route B hop analysis.
+- Implemented analytics submenu control flow using a dedicated loop and exit flag.
+
+### Input Handling
+- Replaced `fmt.Scanln()` with buffered input using `bufio.Reader`.
+- Added input parsing via `fmt.Sscanf()` for menu selections.
+- Eliminated newline buffer issues caused by mixing `Scanln()` and `ReadString()`.
+
+### Code Maintenance
+- Fixed nested loop and switch statement logic.
+- Resolved submenu exit behavior.
+- Cleaned up menu structure and improved readability.
+- Continued planning for Route Comparison integration within Hop Analytics.
+
+## Project Status
+
+| Feature | Status |
+|----------|----------|
+| Traceroute Engine | Complete |
+| Fault Injection | Complete |
+| Hop Analytics | Complete |
+| Route Summaries | Complete |
+| Bottleneck Detection | Complete |
+| Route Comparison | Implemented / Refinement Ongoing |
+| Ping Tool | Complete |
+| TCP Latency Tool | Complete |
+| JSON Export | Complete |
+| Menu System Refactor | Complete |
+
+## Next Steps
+
+- Move Route Comparison into the Hop Analytics submenu.
+- Add route comparison metrics:
+  - Latency differences
+  - Hop count changes
+  - Packet loss comparisons
+- Perform full application testing.
+- Review and clean up code comments.
+- Update project documentation and README.

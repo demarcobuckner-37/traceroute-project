@@ -14,21 +14,29 @@ func RunBottleneckDetection(hop []Hop) []Hop {
 	highestHop := 0
 
 	//Compare each hop against the previous
-	for i := 1; i < len(hop); i++ {
+	for i := 0; i < len(hop); i++ {
 		h := &hop[i]
-		prev := &hop[i-1]
 
-		//RTT INCREASE CALCULATION
-		//Mearsures latency growth between adjanceent hops
-		rttIncrease := h.AvgRTT - prev.AvgRTT
-		h.RTTIncrease = rttIncrease
+		//Reset all detection flags before evaluating this hop
+		h.RTTIncreaseFlag = false
+		h.HighPacketLossFlag = false
+		h.HighJitterFlag = false
+		h.HighAvgRTTFlag = false
+		h.HighMaxRTTFlag = false
 
+		//Bottleneck score accumulates points based on detected issues
 		score := 0
 
-		//Significant RTT increase may indicate a bottleneck or congestion point
-		if prev.SuccessfulProbes > 0 {
+		if i > 0 {
+			prev := &hop[i-1]
 
-			if rttIncrease > 30*time.Millisecond {
+			//RTT INCREASE CALCULATION
+			//Mearsures latency growth between adjancent hops
+			rttIncrease := h.AvgRTT - prev.AvgRTT
+			h.RTTIncrease = rttIncrease
+
+			//Significant RTT increase may indicate a bottleneck or congestion point
+			if prev.SuccessfulProbes > 0 && rttIncrease > 30*time.Millisecond {
 
 				h.RTTIncreaseFlag = true
 				score += 2
@@ -49,7 +57,7 @@ func RunBottleneckDetection(hop []Hop) []Hop {
 
 		}
 
-		//JITER DETECTION
+		//JITTER DETECTION
 		//High jitter can indicate instability and congestion
 		if h.Jitter > 30*time.Millisecond {
 
@@ -92,7 +100,7 @@ func RunBottleneckDetection(hop []Hop) []Hop {
 
 		}
 
-		//Display the most severe bottleneck found so far
+		// Track the highest bottleneck score observed.
 		if score > highestScore {
 			highestScore = score
 			highestHop = h.TTL

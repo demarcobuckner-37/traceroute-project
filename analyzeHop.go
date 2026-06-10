@@ -7,6 +7,7 @@ import (
 func RunAnalyzeHops(hop []Hop) []Hop {
 
 	//Analyze each hp and calculate network performance metrics
+	//Used for bottleneck detection and route analysis
 	for i := range hop {
 
 		h := &hop[i]
@@ -28,7 +29,7 @@ func RunAnalyzeHops(hop []Hop) []Hop {
 		}
 
 		//RTT STATISTICS
-		//Calculate average, min, max RTT and jitter for this hop based on successful probes
+		//Calculate average, min, and max RTT values
 		total := time.Duration(0)
 
 		for _, rtt := range h.RTTs {

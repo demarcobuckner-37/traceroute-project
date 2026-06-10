@@ -6,10 +6,15 @@ import (
 
 func PrintHopAnalysis(hops []Hop) {
 
+	fmt.Println("\nHop Analysis:")
+
+	// HOP ANALYSIS
+	// Display detailed performance metrics for each hop.
 	for _, h := range hops {
 
-		host := h.Host
+		// Replace missing responses with placeholder values.
 		ip := h.IPAddress
+		host := h.Host
 
 		if host == "" {
 			host = "*"
@@ -19,9 +24,10 @@ func PrintHopAnalysis(hops []Hop) {
 			ip = "*"
 		}
 
-		fmt.Println("Hop Analysis:")
-
-		fmt.Printf("Hop: %d\n", h.TTL)
+		// HOP METRICS
+		// Display latency, packet loss, jitter,
+		// and bottleneck analysis results.
+		fmt.Printf("\nHop %d:\n", h.TTL)
 		fmt.Printf("Host: %s\n", host)
 		fmt.Printf("IP Address: %s\n", ip)
 		fmt.Printf("Average RTT: %v\n", h.AvgRTT)
@@ -34,5 +40,30 @@ func PrintHopAnalysis(hops []Hop) {
 		fmt.Printf("Severity: %s\n", h.Severity)
 		fmt.Print("\n")
 
+		// ISSUE REPORTING
+		// Display specific conditions that contributed
+		// to the hop's bottleneck score
+		if h.Severity != "None" {
+			fmt.Println("Issues Detected:")
+
+			if h.RTTIncreaseFlag {
+				fmt.Printf("- Significant RTT Increase\n")
+			}
+			if h.HighPacketLossFlag {
+				fmt.Printf("- High Packet Loss\n")
+			}
+			if h.HighJitterFlag {
+				fmt.Printf("- High Jitter\n")
+			}
+			if h.HighAvgRTTFlag {
+				fmt.Printf("- High Average RTT\n")
+			}
+			if h.HighMaxRTTFlag {
+				fmt.Printf("- High Max RTT\n")
+			}
+
+		}
+		fmt.Print("\n-----------------------------\n\n")
 	}
+
 }

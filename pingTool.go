@@ -10,7 +10,16 @@ import (
 	"golang.org/x/net/ipv4"
 )
 
-func RunPingTool(host string) {
+type PingResult struct {
+	Host       string
+	AvgRTT     time.Duration
+	MinRTT     time.Duration
+	MaxRTT     time.Duration
+	Jitter     time.Duration
+	PacketLoss float64
+}
+
+func RunPingTool(host string) PingResult {
 
 	fmt.Print("\nRunning Ping Tool...\n")
 
@@ -19,7 +28,7 @@ func RunPingTool(host string) {
 	dstAddr, err := net.ResolveIPAddr("ip4", host)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return PingResult{}
 	}
 
 	// ICMP CONNECTION
@@ -27,7 +36,7 @@ func RunPingTool(host string) {
 	c, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
 	if err != nil {
 		fmt.Println(err)
-		return
+		return PingResult{}
 	}
 
 	// Close connection when program exits
@@ -38,6 +47,10 @@ func RunPingTool(host string) {
 	var totalRTT time.Duration
 	var minTime time.Duration
 	var maxTime time.Duration
+	var rtts []time.Duration
+
+	// Track hostname of responding device for final results
+	var replyHost string
 
 	var successfulProbes int
 
@@ -56,7 +69,6 @@ func RunPingTool(host string) {
 				// Sequence number for tracking requests
 				Seq: i,
 
-				// Packet payload data
 				Data: []byte("WADDUP"),
 			},
 		}
@@ -65,7 +77,7 @@ func RunPingTool(host string) {
 		b, err := m.Marshal(nil)
 		if err != nil {
 			fmt.Println(err)
-			return
+			return PingResult{}
 		}
 
 		// RTT TIMING
@@ -77,7 +89,7 @@ func RunPingTool(host string) {
 		_, err = c.WriteTo(b, dstAddr)
 		if err != nil {
 			fmt.Println(err)
-			return
+			return PingResult{}
 		}
 
 		// RECEIVE REPLY
@@ -88,7 +100,7 @@ func RunPingTool(host string) {
 		err = c.SetReadDeadline(time.Now().Add(3 * time.Second))
 		if err != nil {
 			fmt.Println(err)
-			return
+			return PingResult{}
 		}
 		// Read incoming ICMP reply packet
 		numRead, peer, err := c.ReadFrom(buf)
@@ -102,6 +114,9 @@ func RunPingTool(host string) {
 		// RTT TIMING
 		// Measure round-trip time
 		elapsed := time.Since(start)
+
+		// Store RTT sample for later jitter calculation
+		rtts = append(rtts, elapsed)
 
 		//Initialize min and max times on first successful probe
 		if successfulProbes == 1 {
@@ -126,18 +141,21 @@ func RunPingTool(host string) {
 		fmt.Println("RTT:", elapsed)
 
 		// Print responding host
-		fmt.Printf("Received reply from %v\n", peer)
+		resolvedHost := ResolveHost(peer.String())
+
+		if replyHost == "" {
+			replyHost = resolvedHost
+		}
+
+		fmt.Printf("Received reply from %s (%s)\n", resolvedHost, peer.String())
 
 		// PACKET PARSING
 		// Parse raw ICMP packet into structured message
 		rm, err := icmp.ParseMessage(1, buf[:numRead])
 		if err != nil {
 			fmt.Println(err)
-			return
+			return PingResult{}
 		}
-
-		//Print Parsed ICMP Type For Debugging
-		fmt.Println("ICMP Type:", rm.Type)
 
 		//ICMP MESSAGE HANDLING
 		//Process different ICMP message types accordingly
@@ -161,11 +179,6 @@ func RunPingTool(host string) {
 				continue
 			}
 
-			//Output Formatting: Print Echo Reply information, including ID, Sequence Number, and Payload Data
-			fmt.Println("Received Echo Reply")
-
-			fmt.Printf("Echo Reply ID: %d, Seq: %d, Data: %s\n", echoReply.ID, echoReply.Seq, string(echoReply.Data))
-
 		default:
 
 			fmt.Printf("Received ICMP message of type %v\n", rm.Type)
@@ -178,16 +191,55 @@ func RunPingTool(host string) {
 		totalRTT += elapsed
 	}
 
-	//Calculate and Print Average RTT, Min RTT, Max RTT, and Packet Loss Percentage after all probes are complete
+	// JITTER CALCULATION
+	// Measure average variation between consecutive RTT samples
+	var jitter time.Duration
+
+	if len(rtts) > 1 {
+
+		var totalDiff time.Duration
+
+		for i := 1; i < len(rtts); i++ {
+
+			// Calculate absolute difference between consecutive RTT samples
+			diff := rtts[i] - rtts[i-1]
+
+			if diff < 0 {
+				diff = -diff
+			}
+
+			totalDiff += diff
+		}
+
+		jitter = totalDiff / time.Duration(len(rtts)-1)
+
+	}
+
+	// RTT STATISTICS
+	// Calculate average RTT across all successful probes
+	var avgRTT time.Duration
+
 	if successfulProbes > 0 {
-		avgRTT := totalRTT / time.Duration(successfulProbes)
+		avgRTT = totalRTT / time.Duration(successfulProbes)
+
 		fmt.Printf("\nAverage RTT over %d probes: %s\n", successfulProbes, avgRTT)
 		fmt.Printf("Minimum RTT: %s\n", minTime)
 		fmt.Printf("Maximum RTT: %s\n", maxTime)
+		fmt.Printf("Jitter: %s\n", jitter)
 	}
 
-	//Packet Loss Calculation: Calculate percentage of lost packets based on number of successful probes out of total probes sent
+	// Percentage of probes that did not receive a reply
 	packetLoss := float64(3-successfulProbes) / 3 * 100
 	fmt.Printf("Packet Loss: %.2f%%\n", packetLoss)
 
+	// RETURN RESULTS
+	// Store calculated metrics in PingResult structure
+	return PingResult{
+		Host:       replyHost,
+		AvgRTT:     avgRTT,
+		MinRTT:     minTime,
+		MaxRTT:     maxTime,
+		Jitter:     jitter,
+		PacketLoss: packetLoss,
+	}
 }
