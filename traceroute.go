@@ -219,11 +219,11 @@ func RunTraceroute(host string, faults Fault) []Hop {
 
 			// RTT TIMING
 			// Measure round-trip time
-			elasped := time.Since(start)
+			elapsed := time.Since(start)
 
 			fmt.Printf("\nHop %d Probe %d\n", ttl, i+1)
 
-			fmt.Println("RTT:", elasped)
+			fmt.Println("RTT:", elapsed)
 
 			// Print raw packet bytes in hexadecimal
 			//fmt.Printf("% X\n", buf[:numRead])
@@ -249,7 +249,7 @@ func RunTraceroute(host string, faults Fault) []Hop {
 				//Timing has already been completed before hostname resolution
 				resolvedHost := ResolveHost(peer.String())
 
-				fmt.Printf("Received Time Exceeded message: TTL: %d| Reply From %s| Time Elasped: %v|\n", ttl, resolvedHost, elasped)
+				fmt.Printf("Received Time Exceeded message: TTL: %d| Reply From %s| Time Elapsed: %v|\n", ttl, resolvedHost, elapsed)
 
 				// HOP LOOKUP
 				// Check whether this TTL already exists in the route.
@@ -258,7 +258,7 @@ func RunTraceroute(host string, faults Fault) []Hop {
 
 				for k := range hops {
 					if hops[k].TTL == ttl {
-						hops[k].RTTs = append(hops[k].RTTs, elasped)
+						hops[k].RTTs = append(hops[k].RTTs, elapsed)
 
 						hops[k].Host = resolvedHost
 						hops[k].IPAddress = peer.String()
@@ -275,7 +275,7 @@ func RunTraceroute(host string, faults Fault) []Hop {
 				if !found {
 					hops = append(hops, Hop{
 						TTL:              ttl,
-						RTTs:             []time.Duration{elasped},
+						RTTs:             []time.Duration{elapsed},
 						Host:             resolvedHost,
 						IPAddress:        peer.String(),
 						SuccessfulProbes: 1,
@@ -316,7 +316,7 @@ func RunTraceroute(host string, faults Fault) []Hop {
 					// RTT STORAGE
 					// Add RTT measurement to existing hop
 					if hops[k].TTL == ttl {
-						hops[k].RTTs = append(hops[k].RTTs, elasped)
+						hops[k].RTTs = append(hops[k].RTTs, elapsed)
 
 						hops[k].Host = resolvedHost
 						hops[k].IPAddress = peer.String()
@@ -333,7 +333,7 @@ func RunTraceroute(host string, faults Fault) []Hop {
 				if !found {
 					hops = append(hops, Hop{
 						TTL:              ttl,
-						RTTs:             []time.Duration{elasped},
+						RTTs:             []time.Duration{elapsed},
 						Host:             resolvedHost,
 						IPAddress:        peer.String(),
 						SuccessfulProbes: 1,
