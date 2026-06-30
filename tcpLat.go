@@ -10,6 +10,12 @@ type TCPResult struct {
 	//Target host that was tested
 	Host string
 
+	StartTime time.Time
+
+	EndTime time.Time
+
+	TotalRunTime time.Duration
+
 	// Time required to resolve hostname to IP address
 	DNSLookupTime time.Duration
 
@@ -132,35 +138,15 @@ func RunLatencyTool(host string) TCPResult {
 	// Record ending time
 	tm1 := time.Now()
 
-	// OUTPUT FORMATTING
-	// Print timing information
-	fmt.Printf("\nTiming Information:\n")
-
-	fmt.Printf("Start time:%s\n", tm)
-	fmt.Printf("End time:%s\n", tm1)
-
-	fmt.Printf("Total Runtime:%s\n", elapsed)
-
-	fmt.Printf("DNS Lookup time:%s\n", dnsElapsed)
-
-	fmt.Printf("Average Connection Time: %s\n", avgConnTime)
-
-	fmt.Printf("Total Probe time: %s\n", totalConnTime)
-
-	fmt.Printf("Minimum Connection Time: %s\n", minConnTime)
-
-	fmt.Printf("Maximum Connection Time: %s\n", maxConnTime)
-
-	fmt.Printf("Successful Connections: %d/3\n", successfulConnections)
-
 	// PACKET LOSS CALCULATION
 	// Percentage of connection attempts that failed
 	packetLoss := float64(3-successfulConnections) / 3 * 100
 
-	fmt.Printf("Packet Loss: %.2f%%\n", packetLoss)
-
 	return TCPResult{
 		Host:                  host,
+		StartTime:             tm,
+		EndTime:               tm1,
+		TotalRunTime:          elapsed,
 		DNSLookupTime:         dnsElapsed,
 		AvgConnectionTime:     avgConnTime,
 		MinConnectionTime:     minConnTime,

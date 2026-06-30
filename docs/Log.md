@@ -918,7 +918,7 @@ Prepared the structure for future bottleneck analysis.
 
 ## Problems Encountered
 
-### Packet Loss Reporting Incorrect Values
+ Packet Loss Reporting Incorrect Values
 
 Cause:
 
@@ -1103,7 +1103,7 @@ Used to identify the most significant bottleneck in the traceroute path.
 
 ## Problems Encountered
 
-### Missing Host Information
+ Missing Host Information
 
 Some hops did not respond to probes.
 
@@ -1118,7 +1118,7 @@ Determined this is expected behavior for hops experiencing complete packet loss 
 
 ---
 
-### False RTT Increase Detection
+ False RTT Increase Detection
 
 Discovered that RTT increases should only be calculated when the previous hop successfully responded.
 
@@ -1375,7 +1375,7 @@ instead of blank values.
 
 ## Problems Encountered
 
-### Route Change Output Contained Blank Values
+Route Change Output Contained Blank Values
 
 Cause:
 
@@ -1387,7 +1387,7 @@ Example:
 Route change detected at Hop 5:  ->
 ```
 
-### Reverse DNS Lookup Failures
+ Reverse DNS Lookup Failures
 
 Many intermediate routers did not return hostnames.
 
@@ -1549,7 +1549,7 @@ type Fault struct {
 - Add JSON import/export for historical route comparison.
 - Begin documenting results and methodology for CSCE 4890 paper.
 
-# June 5, 2026 – Traceroute Project Log
+# June 5, 2026
 
 ## Objectives
 - Continue development of the enhanced traceroute tool.

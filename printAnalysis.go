@@ -8,6 +8,9 @@ func PrintHopAnalysis(hops []Hop) {
 
 	fmt.Println("\nHop Analysis:")
 
+	highestScore := 0
+	highestHop := 0
+
 	// HOP ANALYSIS
 	// Display detailed performance metrics for each hop.
 	for _, h := range hops {
@@ -63,7 +66,18 @@ func PrintHopAnalysis(hops []Hop) {
 			}
 
 		}
+
+		if h.BottleneckScore > highestScore {
+			highestScore = h.BottleneckScore
+			highestHop = h.TTL
+		}
+
 		fmt.Print("\n-----------------------------\n\n")
+	}
+	if highestScore > 0 {
+		fmt.Printf("\nHighest bottleneck score: %d at Hop %d\n", highestScore, highestHop)
+	} else {
+		fmt.Println("\nNo significant bottlenecks detected.")
 	}
 
 }

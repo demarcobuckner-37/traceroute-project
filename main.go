@@ -39,7 +39,7 @@ func main() {
 		fmt.Printf("\nCurrent Host: %s\n", host)
 
 		fmt.Println("1. Run Traceroute")
-		fmt.Println("2. Run Traceroute with Fault Injection")
+		fmt.Println("2. Run Traceroute(Optional Fault Injection)")
 		fmt.Println("3. Hop Analytics")
 		fmt.Println("4. Export Route A JSON")
 		fmt.Println("5. Export Route B JSON")
@@ -72,19 +72,38 @@ func main() {
 			// BASELINE TRACEROUTE
 			// Run normal route analysis without faults
 			routeA = RunTraceroute(host, Fault{Enabled: false})
-			routeA = RunAnalyzeHops(routeA)
+			routeA = AnalyzeHops(routeA)
 
 		case 2:
 
-			// FAULT-INJECTED TRACEROUTE
-			// Simulate packet loss and delay for comparison testing
-			routeB = RunTraceroute(host, Fault{
-				Enabled:  true,
-				DropRate: 0.3,
-				Delay:    100 * time.Millisecond,
-			})
+			fmt.Print("Enable fault injection? (Y/N): ")
 
-			routeB = RunAnalyzeHops(routeB)
+			input, _ := reader.ReadString('\n')
+			input = strings.TrimSpace(strings.ToUpper(input))
+
+			var fault Fault
+
+			if input == "Y" {
+
+				fault = Fault{
+					Enabled:  true,
+					DropRate: 0.3,
+					Delay:    100 * time.Millisecond,
+				}
+
+				fmt.Println("Fault injection enabled.")
+
+			} else {
+
+				fault = Fault{
+					Enabled: false,
+				}
+
+				fmt.Println("Fault injection disabled.")
+			}
+
+			routeB = RunTraceroute(host, fault)
+			routeB = AnalyzeHops(routeB)
 
 		case 3:
 
@@ -149,7 +168,6 @@ func main() {
 						continue
 					}
 
-					RunBottleneckDetection(routeA)
 					PrintHopAnalysis(routeA)
 
 				case 4:
@@ -161,7 +179,6 @@ func main() {
 						continue
 					}
 
-					RunBottleneckDetection(routeB)
 					PrintHopAnalysis(routeB)
 
 				case 5:
@@ -261,11 +278,14 @@ func main() {
 
 			fmt.Printf("\nTCP Summary:\n")
 			fmt.Printf("Host: %s\n", tcpResult.Host)
+			fmt.Printf("Start time:%s\n", tcpResult.StartTime)
+			fmt.Printf("End time:%s\n", tcpResult.EndTime)
+			fmt.Printf("Total Runtime: %v\n", tcpResult.TotalRunTime)
 			fmt.Printf("DNS Lookup Time: %v\n", tcpResult.DNSLookupTime)
 			fmt.Printf("Average Connection Time: %v\n", tcpResult.AvgConnectionTime)
 			fmt.Printf("Minimum Connection Time: %v\n", tcpResult.MinConnectionTime)
 			fmt.Printf("Maximum Connection Time: %v\n", tcpResult.MaxConnectionTime)
-			fmt.Printf("Successful Connections: %d\n", tcpResult.SuccessfulConnections)
+			fmt.Printf("Successful Connections: %d/3\n", tcpResult.SuccessfulConnections)
 			fmt.Printf("Packet Loss: %.2f%%\n", tcpResult.PacketLoss)
 
 		case 9:

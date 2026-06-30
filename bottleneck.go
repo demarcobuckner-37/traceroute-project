@@ -1,17 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"time"
 )
 
 func RunBottleneckDetection(hop []Hop) []Hop {
-
-	fmt.Print("\nRunning Bottleneck Detection...\n")
-
-	//Track the most severe bottleneck found in the route
-	highestScore := 0
-	highestHop := 0
 
 	//Compare each hop against the previous
 	for i := 0; i < len(hop); i++ {
@@ -100,22 +93,6 @@ func RunBottleneckDetection(hop []Hop) []Hop {
 
 		}
 
-		// Track the highest bottleneck score observed.
-		if score > highestScore {
-			highestScore = score
-			highestHop = h.TTL
-		}
-
-	}
-
-	//Display most significant bottleneck detected in the route
-	if highestScore > 0 {
-
-		fmt.Printf("\nHighest bottleneck score: %d at Hop %d\n", highestScore, highestHop)
-
-	} else {
-
-		fmt.Printf("\nNo significant bottlenecks detected.\n")
 	}
 
 	return hop

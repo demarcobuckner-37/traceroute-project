@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-func RunAnalyzeHops(hop []Hop) []Hop {
+func AnalyzeHops(hop []Hop) []Hop {
 
 	//Analyze each hp and calculate network performance metrics
 	//Used for bottleneck detection and route analysis
@@ -69,5 +69,7 @@ func RunAnalyzeHops(hop []Hop) []Hop {
 		h.AvgRTT = total / time.Duration(len(h.RTTs))
 
 	}
+	hop = RunBottleneckDetection(hop)
+
 	return hop
 }

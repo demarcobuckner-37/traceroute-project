@@ -7,7 +7,7 @@ import (
 
 func RunRouteComparison(hop1 []Hop, hop2 []Hop) {
 
-	fmt.Println("Route Comparison Analysis:")
+	fmt.Println("\nRoute Comparison Analysis:")
 
 	//Compare two traceroute results to identify changes in network performance over time
 	//This can help detect emerging bottlenecks or improvements in the path
@@ -15,7 +15,7 @@ func RunRouteComparison(hop1 []Hop, hop2 []Hop) {
 	// ROUTE LENGTH CHECK
 	// Detect changes in the number of hops between routes
 	if len(hop1) != len(hop2) {
-		fmt.Printf("Route length changed: Route 1 has %d hops, Route 2 has %d hops\n", len(hop1), len(hop2))
+		fmt.Printf("\nRoute length changed: Route 1 has %d hops, Route 2 has %d hops\n", len(hop1), len(hop2))
 	}
 
 	// HOP-BY-HOP COMPARISON
@@ -46,7 +46,7 @@ func RunRouteComparison(hop1 []Hop, hop2 []Hop) {
 		// Check whether traffic is taking a different path.
 		if h1.IPAddress != h2.IPAddress {
 			fmt.Printf("Route change detected at Hop %d: %s -> %s\n", h1.TTL, oldIP, newIP)
-
+			fmt.Print("\n")
 			continue
 		}
 

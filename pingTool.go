@@ -222,10 +222,6 @@ func RunPingTool(host string) PingResult {
 	if successfulProbes > 0 {
 		avgRTT = totalRTT / time.Duration(successfulProbes)
 
-		fmt.Printf("\nAverage RTT over %d probes: %s\n", successfulProbes, avgRTT)
-		fmt.Printf("Minimum RTT: %s\n", minTime)
-		fmt.Printf("Maximum RTT: %s\n", maxTime)
-		fmt.Printf("Jitter: %s\n", jitter)
 	}
 
 	// Percentage of probes that did not receive a reply
